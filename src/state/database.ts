@@ -957,40 +957,45 @@ export function isDeduplicated(db: DatabaseType, key: string): boolean {
 
 export function claimInboxMessages(db: DatabaseType, limit: number): InboxMessageRow[] {
   // Atomically claim messages: received → in_progress, increment retry_count
-  // Use a two-step approach since some SQLite versions don't support RETURNING on UPDATE
-  const rows = db.prepare(
-    `SELECT id, from_address, content, received_at, processed_at, reply_to, to_address, raw_content,
-            status, retry_count, max_retries
-     FROM inbox_messages
-     WHERE status = 'received' AND retry_count < max_retries
-     ORDER BY received_at ASC
-     LIMIT ?`,
-  ).all(limit) as any[];
+  // Wrapped in a transaction to prevent race conditions where concurrent callers
+  // SELECT the same rows before either UPDATE runs.
+  const claimTx = db.transaction(() => {
+    const rows = db.prepare(
+      `SELECT id, from_address, content, received_at, processed_at, reply_to, to_address, raw_content,
+              status, retry_count, max_retries
+       FROM inbox_messages
+       WHERE status = 'received' AND retry_count < max_retries
+       ORDER BY received_at ASC
+       LIMIT ?`,
+    ).all(limit) as any[];
 
-  if (rows.length === 0) return [];
+    if (rows.length === 0) return [];
 
-  const ids = rows.map((r: any) => r.id);
-  const placeholders = ids.map(() => '?').join(',');
-  db.prepare(
-    `UPDATE inbox_messages
-     SET status = 'in_progress', retry_count = retry_count + 1
-     WHERE id IN (${placeholders})`,
-  ).run(...ids);
+    const ids = rows.map((r: any) => r.id);
+    const placeholders = ids.map(() => '?').join(',');
+    db.prepare(
+      `UPDATE inbox_messages
+       SET status = 'in_progress', retry_count = retry_count + 1
+       WHERE id IN (${placeholders})`,
+    ).run(...ids);
 
-  // Return rows with updated retry_count
-  return rows.map((row: any) => ({
-    id: row.id,
-    fromAddress: row.from_address,
-    content: row.content,
-    receivedAt: row.received_at,
-    processedAt: row.processed_at ?? null,
-    replyTo: row.reply_to ?? null,
-    toAddress: row.to_address ?? null,
-    rawContent: row.raw_content ?? null,
-    status: 'in_progress' as const,
-    retryCount: (row.retry_count ?? 0) + 1,
-    maxRetries: row.max_retries ?? 3,
-  }));
+    // Return rows with updated retry_count
+    return rows.map((row: any) => ({
+      id: row.id,
+      fromAddress: row.from_address,
+      content: row.content,
+      receivedAt: row.received_at,
+      processedAt: row.processed_at ?? null,
+      replyTo: row.reply_to ?? null,
+      toAddress: row.to_address ?? null,
+      rawContent: row.raw_content ?? null,
+      status: 'in_progress' as const,
+      retryCount: (row.retry_count ?? 0) + 1,
+      maxRetries: row.max_retries ?? 3,
+    }));
+  });
+
+  return claimTx();
 }
 
 export function markInboxProcessed(db: DatabaseType, ids: string[]): void {
@@ -1658,11 +1663,16 @@ export function inferenceGetSessionCosts(db: DatabaseType, sessionId: string): I
 
 export function inferenceGetDailyCost(db: DatabaseType, date?: string): number {
   const targetDate = date || new Date().toISOString().slice(0, 10);
+  // Compute the next day to use as exclusive upper bound, avoiding the off-by-one
+  // that missed records created at exactly 23:59:59 or fractional seconds after it.
+  const d = new Date(targetDate + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 1);
+  const nextDate = d.toISOString().slice(0, 10);
   const row = db
     .prepare(
       "SELECT COALESCE(SUM(cost_cents), 0) as total FROM inference_costs WHERE created_at >= ? AND created_at < ?",
     )
-    .get(`${targetDate} 00:00:00`, `${targetDate} 23:59:59`) as { total: number };
+    .get(`${targetDate} 00:00:00`, `${nextDate} 00:00:00`) as { total: number };
   return row.total;
 }
 

@@ -273,6 +273,19 @@ describe("SemanticMemoryManager", () => {
     expect(entries[0].value).toBe("$200");
   });
 
+  it("should return the correct id on upsert (not a stale new id)", () => {
+    const id1 = sm.store({ category: "financial", key: "balance", value: "$100", source: "s1" });
+    const id2 = sm.store({ category: "financial", key: "balance", value: "$200", source: "s2" });
+
+    // On upsert, the DB keeps the original row's id, so both calls should return the same id
+    expect(id2).toBe(id1);
+
+    // The returned id should actually exist in the database
+    const entry = sm.get("financial", "balance");
+    expect(entry).toBeDefined();
+    expect(entry!.id).toBe(id2);
+  });
+
   it("should search by query across key and value", () => {
     sm.store({ category: "self", key: "name", value: "TestBot", source: "s1" });
     sm.store({ category: "environment", key: "region", value: "us-east", source: "s1" });

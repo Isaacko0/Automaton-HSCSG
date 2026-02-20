@@ -919,6 +919,19 @@ describe("Inference DB Helpers", () => {
     modelRegistrySetEnabled(db, "m1", true);
     expect(modelRegistryGet(db, "m1")!.enabled).toBe(true);
   });
+
+  it("inferenceGetDailyCost includes records at end of day (23:59:59)", () => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Insert a record at 23:59:59 (end of day)
+    db.prepare(
+      `INSERT INTO inference_costs (id, session_id, turn_id, model, provider, input_tokens, output_tokens, cost_cents, latency_ms, tier, task_type, cache_hit, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run("eod-record", "s1", null, "gpt-4.1", "openai", 100, 50, 7, 200, "normal", "agent_turn", 0, `${today} 23:59:59`);
+
+    const cost = inferenceGetDailyCost(db, today);
+    expect(cost).toBe(7);
+  });
 });
 
 // ─── Default Model Strategy Config Tests ──────────────────────────

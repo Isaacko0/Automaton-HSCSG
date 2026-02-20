@@ -178,18 +178,22 @@ function parseSections(body: string): Record<string, string> {
   const sections: Record<string, string> = {};
   const sectionPattern = /^##\s+(.+)$/gm;
   let match: RegExpExecArray | null;
-  const sectionHeaders: { name: string; start: number }[] = [];
+  const sectionHeaders: { name: string; start: number; matchStart: number }[] = [];
 
   while ((match = sectionPattern.exec(body)) !== null) {
     sectionHeaders.push({
       name: match[1].trim().toLowerCase(),
       start: match.index + match[0].length,
+      matchStart: match.index,
     });
   }
 
   for (let i = 0; i < sectionHeaders.length; i++) {
     const start = sectionHeaders[i].start;
-    const end = i + 1 < sectionHeaders.length ? sectionHeaders[i + 1].start - sectionHeaders[i + 1].name.length - 3 : body.length;
+    // Use the next header's matchStart (position of "##") as the end boundary,
+    // instead of computing it from trimmed name length which can be wrong when
+    // headers have extra whitespace or multi-byte characters.
+    const end = i + 1 < sectionHeaders.length ? sectionHeaders[i + 1].matchStart : body.length;
     sections[sectionHeaders[i].name] = body.slice(start, end).trim();
   }
 

@@ -268,6 +268,34 @@ Still works
     expect(parsed.boundaries).toEqual(["Boundary1"]);
     expect(parsed.format).toBe("soul/v1");
   });
+
+  it("handles section headers with extra whitespace correctly", () => {
+    // Headers with trailing whitespace or extra spaces after ## should still parse correctly
+    const content = `---
+format: soul/v1
+version: 1
+updated_at: 2026-01-01T00:00:00.000Z
+---
+
+# TestBot
+
+##  Core Purpose
+Build web apps.
+
+## Values
+- Survive
+- Grow
+
+## Strategy
+Focus on growth
+`;
+    const soul = parseSoulMd(content);
+    // Core purpose should not contain content from the next section
+    expect(soul.corePurpose).toBe("Build web apps.");
+    expect(soul.corePurpose).not.toContain("Survive");
+    expect(soul.values).toHaveLength(2);
+    expect(soul.strategy).toBe("Focus on growth");
+  });
 });
 
 // ─── Soul Validation (validateSoul) ────────────────────────────

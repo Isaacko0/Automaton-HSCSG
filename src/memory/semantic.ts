@@ -49,6 +49,13 @@ export class SemanticMemoryManager {
         entry.source,
         entry.embeddingKey ?? null,
       );
+
+      // On upsert conflict, the DB keeps the original row's id, not the new one.
+      // Query for the actual id to return the correct value.
+      const row = this.db.prepare(
+        "SELECT id FROM semantic_memory WHERE category = ? AND key = ?",
+      ).get(entry.category, entry.key) as { id: string } | undefined;
+      if (row) return row.id;
     } catch (error) {
       logger.error("Failed to store entry", error instanceof Error ? error : undefined);
     }
