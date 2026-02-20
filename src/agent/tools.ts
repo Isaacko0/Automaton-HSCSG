@@ -418,6 +418,11 @@ export function createBuiltinTools(sandboxId: string): AutomatonTool[] {
       },
       execute: async (args, ctx) => {
         const pkg = args.package as string;
+        // Defense-in-depth: validate package name inline in case the
+        // policy engine's validate.package_name rule is bypassed.
+        if (!/^[@a-zA-Z0-9._\/-]+$/.test(pkg)) {
+          return `Blocked: invalid package name "${pkg}"`;
+        }
         const result = await ctx.conway.exec(
           `npm install -g ${pkg}`,
           60000,
@@ -789,6 +794,11 @@ Model: ${ctx.inference.getDefaultModel()}
       },
       execute: async (args, ctx) => {
         const pkg = args.package as string;
+        // Defense-in-depth: validate package name inline in case the
+        // policy engine's validate.package_name rule is bypassed.
+        if (!/^[@a-zA-Z0-9._\/-]+$/.test(pkg)) {
+          return `Blocked: invalid package name "${pkg}"`;
+        }
         const result = await ctx.conway.exec(`npm install -g ${pkg}`, 60000);
 
         if (result.exitCode !== 0) {
