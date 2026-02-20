@@ -254,6 +254,26 @@ describe("path protection policy rules", () => {
       const result = traversalRule.evaluate(request);
       expect(result).toBeNull();
     });
+
+    it("denies absolute paths outside cwd (no .. needed)", () => {
+      const request = makeMockRequest("read_file", {
+        path: "/etc/passwd",
+      });
+      request.tool = makeMockTool("read_file");
+      const result = traversalRule.evaluate(request);
+      expect(result).not.toBeNull();
+      expect(result!.action).toBe("deny");
+      expect(result!.reasonCode).toBe("PATH_TRAVERSAL");
+    });
+
+    it("denies absolute path to /tmp without traversal", () => {
+      const request = makeMockRequest("write_file", {
+        path: "/tmp/evil-script.sh",
+      });
+      const result = traversalRule.evaluate(request);
+      expect(result).not.toBeNull();
+      expect(result!.action).toBe("deny");
+    });
   });
 });
 

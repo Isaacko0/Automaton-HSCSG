@@ -136,18 +136,16 @@ function createTraversalDetectionRule(): PolicyRule {
       // Resolve the path first
       const resolved = path.resolve(filePath);
 
-      // After resolution, the path should not escape the working directory
-      // Check if the original path contained traversal patterns
-      if (filePath.includes("..")) {
-        // Verify the resolved path stays within the current working directory
-        const cwd = process.cwd();
-        if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
-          return deny(
-            "path.traversal_detection",
-            "PATH_TRAVERSAL",
-            `Path traversal detected: "${filePath}" resolves outside working directory`,
-          );
-        }
+      // Always verify the resolved path stays within the working directory,
+      // regardless of whether ".." is present — absolute paths like
+      // "/etc/passwd" can escape without using traversal sequences.
+      const cwd = process.cwd();
+      if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
+        return deny(
+          "path.traversal_detection",
+          "PATH_TRAVERSAL",
+          `Path resolves outside working directory: "${filePath}"`,
+        );
       }
 
       // Also check for double-slash tricks
