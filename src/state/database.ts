@@ -580,11 +580,11 @@ function applyMigrations(db: DatabaseType): void {
       version: 4,
       apply: () => {
         db.exec(MIGRATION_V4);
-        try { db.exec(MIGRATION_V4_ALTER); } catch (error) { logger.debug("V4 ALTER (to_address) skipped", error instanceof Error ? error : undefined); }
-        try { db.exec(MIGRATION_V4_ALTER2); } catch (error) { logger.debug("V4 ALTER (raw_content) skipped", error instanceof Error ? error : undefined); }
-        try { db.exec(MIGRATION_V4_ALTER_INBOX_STATUS); } catch (error) { logger.debug("V4 ALTER (inbox status) skipped", error instanceof Error ? error : undefined); }
-        try { db.exec(MIGRATION_V4_ALTER_INBOX_RETRY); } catch (error) { logger.debug("V4 ALTER (inbox retry_count) skipped", error instanceof Error ? error : undefined); }
-        try { db.exec(MIGRATION_V4_ALTER_INBOX_MAX_RETRIES); } catch (error) { logger.debug("V4 ALTER (inbox max_retries) skipped", error instanceof Error ? error : undefined); }
+        try { db.exec(MIGRATION_V4_ALTER); } catch { logger.debug("V4 ALTER (to_address) skipped — column likely exists"); }
+        try { db.exec(MIGRATION_V4_ALTER2); } catch { logger.debug("V4 ALTER (raw_content) skipped — column likely exists"); }
+        try { db.exec(MIGRATION_V4_ALTER_INBOX_STATUS); } catch { logger.debug("V4 ALTER (inbox status) skipped — column likely exists"); }
+        try { db.exec(MIGRATION_V4_ALTER_INBOX_RETRY); } catch { logger.debug("V4 ALTER (inbox retry_count) skipped — column likely exists"); }
+        try { db.exec(MIGRATION_V4_ALTER_INBOX_MAX_RETRIES); } catch { logger.debug("V4 ALTER (inbox max_retries) skipped — column likely exists"); }
       },
     },
     {
@@ -934,7 +934,7 @@ export function insertDedupKey(db: DatabaseType, key: string, taskName: string, 
     return true;
   } catch (error) {
     // Key already exists (duplicate) — expected for dedup
-    logger.debug("Dedup key insert failed (likely duplicate)", error instanceof Error ? error : undefined);
+    logger.debug("Dedup key insert failed (likely duplicate)");
     return false;
   }
 }

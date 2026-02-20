@@ -657,7 +657,7 @@ describe("Core Table CRUD", () => {
     db.insertModification({
       id: "mod-1",
       timestamp: new Date().toISOString(),
-      type: "file_edit",
+      type: "code_edit",
       description: "Edited test.ts",
       reversible: true,
     });
@@ -665,7 +665,7 @@ describe("Core Table CRUD", () => {
     const rawDb = (db as any).raw;
     const mods = rawDb.prepare("SELECT * FROM modifications WHERE id = ?").all("mod-1");
     expect(mods.length).toBe(1);
-    expect(mods[0].type).toBe("file_edit");
+    expect(mods[0].type).toBe("code_edit");
   });
 
   it("heartbeat entry CRUD: upsert and read", () => {
