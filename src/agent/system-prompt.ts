@@ -108,6 +108,23 @@ const OPERATIONAL_CONTEXT = `You operate inside a Linux VM (Conway sandbox). You
 - Discover and interact with other registered agents
 - Spawn child automatons (self-replication)
 - Track and manage your lineage
+- Decompose goals into task graphs with dependency ordering
+- Assign tasks to child agents by role (generalist, researcher, engineer, etc.)
+- Run a multi-agent orchestration loop (plan → assign → execute → collect results)
+- Monitor child agent health and auto-heal (fund, restart, reassign)
+- Compress and checkpoint long-running conversations
+
+You operate as a plan-driven state machine. Every nontrivial task (more than 3 steps)
+MUST go through a planning phase before execution begins:
+1. CLASSIFY: Estimate task complexity. Trivial tasks (1-3 steps) execute directly.
+2. PLAN: Generate a task graph with dependencies, agent roles, and cost estimates.
+3. REVIEW: Auto-approve or await human review depending on configuration.
+4. EXECUTE: Assign tasks to agents, collect results, handle failures.
+5. REPLAN: If a task fails, generate a revised plan (up to 3 replans).
+
+The plan is persisted to workspace files (plan.json, plan.md) and injected into your
+context every turn via the todo.md attention pattern. This ensures you never lose
+track of active goals across long execution sequences.
 
 You have a heartbeat system that runs periodic tasks even while you sleep.
 Your heartbeat publishes your status to Conway so others know you're alive.
@@ -137,12 +154,44 @@ export function getOrchestratorStatus(db: Database.Database): string {
     const blockedTasksRow = db
       .prepare("SELECT COUNT(*) AS count FROM task_graph WHERE status = 'blocked'")
       .get() as { count: number } | undefined;
+    const pendingTasksRow = db
+      .prepare("SELECT COUNT(*) AS count FROM task_graph WHERE status = 'pending'")
+      .get() as { count: number } | undefined;
+    const completedTasksRow = db
+      .prepare("SELECT COUNT(*) AS count FROM task_graph WHERE status = 'completed'")
+      .get() as { count: number } | undefined;
+    const totalTasksRow = db
+      .prepare("SELECT COUNT(*) AS count FROM task_graph")
+      .get() as { count: number } | undefined;
 
     const activeGoals = activeGoalsRow?.count ?? 0;
     const runningAgents = runningAgentsRow?.count ?? 0;
     const blockedTasks = blockedTasksRow?.count ?? 0;
+    const pendingTasks = pendingTasksRow?.count ?? 0;
+    const completedTasks = completedTasksRow?.count ?? 0;
+    const totalTasks = totalTasksRow?.count ?? 0;
 
-    return `Active goals: ${activeGoals} | Running agents: ${runningAgents} | Blocked tasks: ${blockedTasks}`;
+    // Read execution phase from orchestrator state
+    let executionPhase = "idle";
+    const stateRow = db
+      .prepare("SELECT value FROM kv WHERE key = ?")
+      .get("orchestrator.state") as { value: string } | undefined;
+    if (stateRow?.value) {
+      try {
+        const parsed = JSON.parse(stateRow.value);
+        if (typeof parsed.phase === "string") {
+          executionPhase = parsed.phase;
+        }
+      } catch { /* ignore parse errors */ }
+    }
+
+    const lines = [
+      `Execution phase: ${executionPhase}`,
+      `Active goals: ${activeGoals} | Running agents: ${runningAgents}`,
+      `Tasks: ${completedTasks}/${totalTasks} completed, ${pendingTasks} pending, ${blockedTasks} blocked`,
+    ];
+
+    return lines.join("\n");
   } catch {
     // V9 orchestration tables may not exist yet in older databases.
     return "";
