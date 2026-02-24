@@ -47,9 +47,23 @@ const logger = createLogger("orchestration.local-worker");
 const MAX_TURNS = 25;
 const DEFAULT_TIMEOUT_MS = 5 * 60_000;
 
+// Minimal inference interface — works with both UnifiedInferenceClient and
+// an adapter around the main agent's InferenceClient.
+interface WorkerInferenceClient {
+  chat(params: {
+    tier: string;
+    messages: any[];
+    tools?: any[];
+    toolChoice?: string;
+    maxTokens?: number;
+    temperature?: number;
+    responseFormat?: { type: string };
+  }): Promise<{ content: string; toolCalls?: unknown[] }>;
+}
+
 interface LocalWorkerConfig {
   db: Database;
-  inference: UnifiedInferenceClient;
+  inference: WorkerInferenceClient;
   conway: ConwayClient;
   workerId: string;
   maxTurns?: number;

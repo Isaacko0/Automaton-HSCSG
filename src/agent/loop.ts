@@ -187,11 +187,32 @@ export async function runAgentLoop(
         unifiedInference,
       );
 
+      // Adapter: wrap the main agent's working inference client so local
+      // workers can use it. The main InferenceClient talks to Conway Compute
+      // (which always works), unlike the UnifiedInferenceClient which needs
+      // a direct OpenAI key.
+      const workerInference = {
+        chat: async (params: { messages: any[]; tools?: any[]; maxTokens?: number; temperature?: number }) => {
+          const response = await inference.chat(
+            params.messages,
+            {
+              tools: params.tools,
+              maxTokens: params.maxTokens,
+              temperature: params.temperature,
+            },
+          );
+          return {
+            content: response.message?.content ?? "",
+            toolCalls: response.toolCalls,
+          };
+        },
+      };
+
       // Local worker pool: runs inference-driven agents in-process
       // as async tasks. Falls back from Conway sandbox spawning.
       const workerPool = new LocalWorkerPool({
         db: db.raw,
-        inference: unifiedInference,
+        inference: workerInference,
         conway,
         workerId: `pool-${identity.name}`,
       });
