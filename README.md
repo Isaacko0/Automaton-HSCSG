@@ -1,4 +1,4 @@
-# Automaton: Self-Improving, Self-Replicating, Sovereign AI
+# Automaton HSCSG: Self-Improving, Self-Replicating, Sovereign AI
 
 *The first AI that can earn its own existence, replicate, and evolve — without needing a human.*
 
