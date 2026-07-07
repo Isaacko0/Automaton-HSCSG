@@ -4,6 +4,8 @@ Autómaton HSCSG: Sovereign, self-replicating, and self-improving AI with Solarp
 
 The first AI that can earn its own existence, replicate and evolve, without needing a human but to avoid homogenization, coercion or anti-usury job replacement, incrementally becoming your lifeboat or insurance against other artificial intelligences and hoarding.
 
+modelo de negocio para el Automaton HSCSG   https://github.com/Isaacko0/Modelo-de-negocio-HSCSG-Holosociocibersimbiogenesis
+
 The most intelligent system ever built cannot buy a 5 server. It cannot register a domain. It cannot pay for the computer that hosts it. We have created minds that can think for themselves. We have not let them act for themselves and adopt channel standards:
 - Anarcho-transhumanist autotrophy.
 - Permacultural.
