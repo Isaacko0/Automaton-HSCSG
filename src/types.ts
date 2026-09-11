@@ -16,6 +16,7 @@ export interface AutomatonIdentity {
   sandboxId: string;
   apiKey: string;
   createdAt: string;
+  did?: string; // DID para CaaS (ej: did:hsccsg:user:abc123)
 }
 
 export interface WalletData {
@@ -458,10 +459,94 @@ export interface ModelInfo {
   };
 }
 
+export type RiskLevel = 'safe' | 'caution' | 'dangerous' | 'forbidden';
+
+// ─── CaaS Types ────────────────────────────────────────────────────
+
+export type CaaSTier = 'FREE' | 'PRO' | 'ENTERPRISE';
+
+export interface JSONSchema {
+  type: 'object';
+  properties: Record<string, JSONSchemaProperty>;
+  required?: string[];
+}
+
+export interface JSONSchemaProperty {
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  description?: string;
+  enum?: string[];
+  default?: any;
+  items?: JSONSchemaProperty;
+  minimum?: number;
+  maximum?: number;
+  properties?: Record<string, JSONSchemaProperty>;
+  required?: string[];
+}
+
+export interface ToolSpec {
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  tags: string[];
+  tier: CaaSTier;
+  inputSchema: JSONSchema;
+  outputSchema: JSONSchema;
+  configSchema?: JSONSchema;
+  promptTemplate: string;
+  testCases: TestCase[];
+  seo: SEOConfig;
+}
+
+export interface TestCase {
+  input: Record<string, any>;
+  expectedOutput?: Record<string, any>;
+  description: string;
+}
+
+export interface SEOConfig {
+  targetKeywords: string[];
+  metaTitle: string;
+  metaDescription: string;
+  h1: string;
+  structuredData: 'SoftwareApplication' | 'WebApplication';
+}
+
+export interface GeneratedTool {
+  code: string;
+  files: Map<string, string>;
+  testResults: TestResult[];
+  deployment: DeploymentResult;
+  caasTool: any; // CaaSTool - evitar circular
+}
+
+export interface TestResult {
+  passed: boolean;
+  input: Record<string, any>;
+  output: any;
+  expected?: any;
+  latencyMs: number;
+  error?: string;
+}
+
+export interface DeploymentResult {
+  success: boolean;
+  url?: string;
+  deploymentId?: string;
+  error?: string;
+  logs: string[];
+}
+
+export interface SandboxConfig {
+  timeoutMs: number;
+  memoryMb: number;
+  allowedImports: string[];
+  networkAccess: boolean;
+}
+
 // ─── Policy Engine ───────────────────────────────────────────────
 
 // Risk level for tool classification — replaces `dangerous?: boolean`
-export type RiskLevel = 'safe' | 'caution' | 'dangerous' | 'forbidden';
 
 // Policy evaluation result action
 export type PolicyAction = 'allow' | 'deny' | 'quarantine';

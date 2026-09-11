@@ -79,10 +79,12 @@ function isForbiddenCommand(command: string, sandboxId: string): string | null {
   return null;
 }
 
+import { createCaaSWalletTools } from "./tools/caas-wallet.js";
+
 // ─── Built-in Tools ────────────────────────────────────────────
 
 export function createBuiltinTools(sandboxId: string): AutomatonTool[] {
-  return [
+  const builtinTools: AutomatonTool[] = [
     // ── VM/Sandbox Tools ──
     {
       name: "exec",
@@ -2686,8 +2688,12 @@ Model: ${ctx.inference.getDefaultModel()}
         return lines.join("\n");
       },
     },
-  ];
-}
+      ];
+
+      // Add CaaS Wallet Tools
+      const caasTools = createCaaSWalletTools();
+      return [...builtinTools, ...caasTools];
+    }
 
 /**
  * Load installed tools from the database and return as AutomatonTool[].
