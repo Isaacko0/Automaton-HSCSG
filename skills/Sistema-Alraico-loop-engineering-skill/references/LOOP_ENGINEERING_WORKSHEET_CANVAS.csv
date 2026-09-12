@@ -1,0 +1,71 @@
+Sección,Campo,Valor/Entrada,Notas,Check
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Sistema / Objetivo","","",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Fecha / Iteración #","","",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Capacidad actual (medida)","","ej: carga cognitiva 0-100, ancho de banda equipo, etc.",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Umbral k (crítico)","","Valor numérico donde XP_i > k activa y-CARMIS",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Señales XP_i > k","☐ Bloqueo  ☐ Rumiación  ☐ Error sistémico  ☐ Otro: ____","Marcar observables",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Protocolo de reconfiguración","","Pasos concretos: pausa, cambio contexto, acción corporal, etc.",☐
+"1. y-CARMIS — SOBRECARGA Y RECONFIGURACIÓN","Nueva estabilidad esperada (métricas)","","al > k, s > 0.6, y > 0.7, v bajando",☐
+"2. LÍMITES COGNITIVOS — DIAGNÓSTICO POSICIONAL","Límites activos (marcar)","L1 L2 L3 L4 L5 L6 L7 L8 L9 L10 L11 L12 L13 L14 L15 L16 L17 L18 L19 L20","Ver hoja Catálogo Límites",☐
+"2. LÍMITES COGNITIVOS — DIAGNÓSTICO POSICIONAL","Capa dominante","☐ Estructural  ☐ Reconfiguración  ☐ Identitaria  ☐ Social","",☐
+"2. LÍMITES COGNITIVOS — DIAGNÓSTICO POSICIONAL","Bucles retroalimentación","Ej: L9→L10→L4→L9","Mapear ciclos que perpetúan estancamiento",☐
+"2. LÍMITES COGNITIVOS — DIAGNÓSTICO POSICIONAL","Palanca sistémica","","Conexión entre capas a intervenir (ej: romper L11 libera L4)",☐
+"2. LÍMITES COGNITIVOS — DIAGNÓSTICO POSICIONAL","Intervención prioritaria","","Acción concreta inmediata",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","Problema origen (dominio + desc.)","","",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","€ Modelo: componentes","","Nodos interactivos del sistema",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","€ Modelo: al_actual / s_actual / y_actual / v_actual","","Medir: armonía, sincronía, ligadura, estibación",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","Punto C (incapacidad densa)","","Dónde falla sincronía / al < k / v alta / HD/FCP",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","Dominio Y análogo","","Dominio donde estructura relacional es más visible",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","Intervención en Y","","Protocolo específico en dominio análogo",☐
+"3. TRANSDUCCIÓN — ENTRE DOMINIOS","Resultado esperado en X","","Métrica/observables de retorno al dominio original",☐
+"4. VERIFICACIÓN TRIAXIAL","Claim / Propuesta a verificar","","",☐
+"4. VERIFICACIÓN TRIAXIAL","Eje Mental: Coherente? Autopercepción C?","☐ Sí  ☐ No  ☐ Parcial","",☐
+"4. VERIFICACIÓN TRIAXIAL","Eje Simulación: Modelable? Predice?","☐ Sí  ☐ No  ☐ Parcial","",☐
+"4. VERIFICACIÓN TRIAXIAL","Eje Laboratorio: Datos empíricos? Falsable?","☐ Sí  ☐ No  ☐ Parcial","",☐
+"4. VERIFICACIÓN TRIAXIAL","Veredicto","☐ OPERATIVO  ☐ REVISAR v  ☐ RECHAZAR","",☐
+"4. VERIFICACIÓN TRIAXIAL","Estibación residual (v)","☐ Baja  ☐ Media  ☐ Alta  Anclajes: ____","Declarar explícitamente",☐
+"4. VERIFICACIÓN TRIAXIAL","Ligadura (y) con inherente","☐ Alta (>0.8)  ☐ Media (0.5-0.8)  ☐ Baja (<0.5)","",☐
+"5. ECROx — MAPEO","Ecrox actuales (notación I/C-M/P-Per/Gen-V/F)","Ej: C-P-Gen-V, I-M-Per-F, C-M-Gen-F...","Ver hoja Taxonomía Ecrox (16 tipos)",☐
+"5. ECROx — MAPEO","Ecrox Falaces (F) + Límite activado","Ej: C-M-Gen-F → L6; I-P-Gen-F → L9...","",☐
+"5. ECROx — MAPEO","Espejo Pasado — Precedente Necesario","","Reconstrucción deductiva: ¿qué Ecrox previos explican el actual?",☐
+"5. ECROx — MAPEO","Espejo Futuro — Consecuente Posible","","Proyección inductiva: ¿qué Ecrox emergen si reconfiguramos?",☐
+"5. ECROx — MAPEO","Intervención y-CARMIS diseñada","","Sobrecarga controlada XP_i > k para debilitar F y fortalecer V",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","Término / Concepto","","",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P1 - Usos reales + homógrafos","","Contextos formales/informales, homógrafos separados",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P2 - Flujos interpretativos + inconsistencias históricas","","Categorías de significado + usos contradictorios MANTENER ACTIVOS",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P3 - Sustituciones experimentales","","Sinónimos/antónimos: ¿cambia significado? ¿indispensable?",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P4 - Diacronía + Sociolingüística","","Evolución histórica + efecto en oyente actual",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P5 - Modelo científico (analogía formal)","","Ej: topología, termodinámica, teoría de grafos, teoría de categorías",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P6 - Concepto Alráico (definición operativa)","","Términos: PI, y, s, al, v, C, €, anti-reglas, nT[0]",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P7 - Diagnóstico v (estibación)","☐ Baja  ☐ Media (anclaje: ____)  ☐ Alta  Anclajes débiles/fuertes: ____","Autoconciencia epistemológica",☐
+"6. CONCEPTUALIZACIÓN ROBUSTA (8 Pasos)","P8 - Versión Humana (metáfora + semilla autoconciencia)","","Núcleo relacional + analogía evocadora + semilla de autoconciencia",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Sesgo detectado","☐ FCP  ☐ TAD  ☐ HD  ☐ BCFH  Contexto: ___________","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Máscara activa (racionalización)","","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Choque programado diseñado","Tipo: ☐ PI  ☐ Anti-regla  ☐ Verif. Triaxial  ☐ Acelerar feedback","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Acción concreta","","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Métrica de éxito","","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Frecuencia / Cadencia","","",☐
+"7. SESGOS — CHOQUES PROGRAMADOS","Verificación post-choque","☐ Mental  ☐ Simulación  ☐ Laboratorio","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","al (armonía sistémica)","Meta: > k_sist | Actual: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","s (sincronía)","Meta: > 0.6 | Actual: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","y (ligadura con inherente)","Meta: > 0.7 | Actual: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","v (estibación)","Meta: Baja/Media | Actual: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","C (incapacidad densa)","Mapeada: ☐ Sí  ☐ No | Ubicación: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","XP_i (carga/pulsos entrada)","Umbral k: | Actual: ","",☐
+"8. MÉTRICAS DE SEGUIMIENTO (KPIs)","k (umbral crítico)","Definido: | Valor: ","",☐
+"✅ CHECKLIST DoD — DETECCIÓN","y-CARMIS: Umbral k definido y medible","","",☐
+"✅ CHECKLIST DoD — DETECCIÓN","Límites: Mapa completo 20 límites + capa dominante + palanca","","",☐
+"✅ CHECKLIST DoD — DETECCIÓN","Ecrox: 16 tipos mapeados + falaces identificados + espejos temporales","","",☐
+"✅ CHECKLIST DoD — DIAGNÓSTICO","Transducción: € modelo completo + punto C localizado + dominio Y válido","","",☐
+"✅ CHECKLIST DoD — DIAGNÓSTICO","Verificación: 3 ejes completados + v residual declarada + y estimada","","",☐
+"✅ CHECKLIST DoD — DIAGNÓSTICO","Conceptualización: 8 pasos + v diagnosticada + versión humana lista","","",☐
+"✅ CHECKLIST DoD — INTERVENCIÓN","Sesgo: FCP/TAD/HD/BCFH identificado + máscara expuesta + choque diseñado","","",☐
+"✅ CHECKLIST DoD — INTERVENCIÓN","Micro-acciones: No-racionales, experimentales, reversibles, medibles","","",☐
+"✅ CHECKLIST DoD — INTERVENCIÓN","Métricas: al, s, y, v, XP_i, k trackeables en tiempo real","","",☐
+"✅ CHECKLIST DoD — ITERACIÓN","Ciclo ejecutado ≥ 3 veces o hasta al > k estable","","",☐
+"✅ CHECKLIST DoD — ITERACIÓN","Verificación triaxial en cada iteración clave","","",☐
+"✅ CHECKLIST DoD — ITERACIÓN","Canvas actualizado con aprendizajes","","",☐
+"✅ CHECKLIST DoD — CONSOLIDACIÓN","Nuevo Ecrox estable documentado y verificable","","",☐
+"✅ CHECKLIST DoD — CONSOLIDACIÓN","Principios transferibles extraídos (transducción inversa)","","",☐
+"✅ CHECKLIST DoD — CONSOLIDACIÓN","Anti-regla creada para prevenir HD/FCP/TAD recurrente","","",☐
+"✅ CHECKLIST DoD — CONSOLIDACIÓN","Compartido como caso epistemológico (no dogma)","","",☐

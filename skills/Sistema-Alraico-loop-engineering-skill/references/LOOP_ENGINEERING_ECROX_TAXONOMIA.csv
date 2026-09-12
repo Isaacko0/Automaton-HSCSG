@@ -1,0 +1,17 @@
+Notación,Nivel,Tipo,Foco,Validez,Descripción,Ejemplo,Límite Asociado,Intervención
+I-P-Gen-V,Inconsciente (1),Proceso (P),General (Gen),Veraz (V),Procesos automáticos alineados con realidad,"Homeostasia, circulación, ritmo circadiano",—,Mantener/Proteger
+I-P-Per-V,Inconsciente (1),Proceso (P),Personal (Per),Veraz (V),Regulación corporal automática,"Respiración, digestión, respuesta inmune",—,Mantener/Proteger
+I-M-Gen-V,Inconsciente (1),Memoria (M),General (Gen),Veraz (V),Conocimiento internalizado veraz,"Habilidades dominadas (conducir, escribir)",—,Mantener/Proteger
+I-M-Per-V,Inconsciente (1),Memoria (M),Personal (Per),Veraz (V),Memoria procedural personal veraz,"Tu nombre, tu historia verificada",—,Mantener/Proteger
+C-P-Gen-V,Consciente (0),Proceso (P),General (Gen),Veraz (V),Pensamiento/consciente planificación veraz,"Resolución problemas, diseño, estrategia",—,Fortalecer
+C-P-Per-V,Consciente (0),Proceso (P),Personal (Per),Veraz (V),Autorregulación consciente veraz,"Gestión emocional, decisión alineada",—,Fortalecer
+C-M-Gen-V,Consciente (0),Memoria (M),General (Gen),Veraz (V),Conocimiento declarativo veraz,"Hechos verificados, principios comprendidos",—,Fortalecer
+C-M-Per-V,Consciente (0),Memoria (M),Personal (Per),Veraz (V),Autobiografía veraz integrada,"Historia personal coherente con realidad",—,Fortalecer
+I-P-Gen-F,Inconsciente (1),Proceso (P),General (Gen),Falaz (F),Procesos automáticos desalineados,"Sesgos implícitos, reactividad defensiva","L9, L17",y-CARMIS + Verificación
+I-P-Per-F,Inconsciente (1),Proceso (P),Personal (Per),Falaz (F),Automatismos corporales dañinos,"Tensión crónica, apnea, congelamiento","L9, L15",Acción corporal/sensorial
+I-M-Gen-F,Inconsciente (1),Memoria (M),General (Gen),Falaz (F),Conocimiento internalizado falso,"Dogmas, estereotipos, HD cultural","L7, L16, L17",Anti-reglas + Verif. Triaxial
+I-M-Per-F,Inconsciente (1),Memoria (M),Personal (Per),Falaz (F),Memoria procedural disfuncional,"Hábitos dañinos, adicciones, trauma no procesado","L6, L13, L15",y-CARMIS + Reconfiguración
+C-P-Gen-F,Consciente (0),Proceso (P),General (Gen),Falaz (F),Razonamiento/consciente falaz,"Rumiación, planning falaz, MCC","L2, L6, L12",Choque PI + Perspectiva Meta
+C-P-Per-F,Consciente (0),Proceso (P),Personal (Per),Falaz (F),Auto-narrativa dañina,"Soy mi problema, No valgo, L14","L14, L15, L18",Separar persona/patrón + Metáfora
+C-M-Gen-F,Consciente (0),Memoria (M),General (Gen),Falaz (F),Creencias/conocimiento consciente falso,"Teorías conspirativas, pseudociencia, FCP","L3, L6, L8, L16",Verificación Triaxial completa
+C-M-Per-F,Consciente (0),Memoria (M),Personal (Per),Falaz (F),Autobiografía distorsionada,"Trauma no integrado, identidad sintomática L14","L12, L13, L14",Reescritura narrativa + y-CARMIS

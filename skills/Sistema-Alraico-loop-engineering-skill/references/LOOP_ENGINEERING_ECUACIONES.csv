@@ -1,0 +1,11 @@
+Nombre / Concepto,Fórmula,Notas / Variables / Uso
+Ecuación Maestra Dinámica €,"d€/dθ = Σ(TA ⊗ MT) + BR_amp·(1 - sin(2πp - Ac)) - 1 - V_al","TA⊗MT: Acoplamiento componentes-superconjuntos | BR_amp·(1-sin...): Sincronización fractal | V_al: Pérdida por desincronización"
+Estabilidad € (al_global),"al_global = (1/N) Σ(al_i - s_global) > k_sist","Si al < k → Fractura: d€/dt < 0 | N = número de subconjuntos €_i"
+Ley Conservación Armonía,"al_inicial = al_final + Σ_al_disp","al_disp: Armonía perdida en efectos no sincrónicos (calor, radiación, entropía)"
+Ecuación Asertividad (Pa),"Pa = [s(EC_Mb × EBerB) × y_lerl × nT[0] × Reve(BR_Aw, Al)] / [(1 + HD + FCP) × (v_B8 + O + O) × TAD]","Uso: Diagnóstico estructural — localizar cuellos de botella. Si Pa baja a pesar de R alta → Revisar y, HD, FCP. Si s alta pero Pa baja → Revisar nT[0] y v"
+Activación y-CARMIS,"Condiciones: (1) XP_i > k  (2) € estable existe  (3) y-Enfoque  (4) y-Residual | Ecuación: y-CARMIS = (€_vs ⊗ €_vo) ⊘ (s/θ)","€_vs: Trazos inconscientes (protocolos automatizados) | €_vo: Trazos ligados a identidad | s/θ: Razán sincronía/oscilación que estabiliza bucle"
+Umbral Acaparamiento Económico,"B_crit = k/s - v_w","Si B > B_crit → 'Agujero negro económico' | Intervención: l_redist = T_dinero - (1 - B/B_crit)"
+Spin Riqueza,"S_riqueza = h_econ - (M_interacciones / £_base)","Alto spin: Riqueza circula rápido (dinero líquido, ideas virales) | Bajo spin: Riqueza estancada (tierra improductiva, conocimientos ocultos)"
+Condición ERA (Sostenible),"1. Regeneración: d(al)/dt > 0 | 2. Adaptabilidad: ds/d(HD+FCP) < k | 3. Fractalidad: al = al·10^D","Sistema económico sostenible si cumple las 3"
+Entropía Alráica,"Δs = -Y·ak (pérdida niveles) - f·al_disp/dt (disipación direccional)","Entropía = Pérdida capacidad mantener jerarquías £ por desincronización (s↓) + ruptura armonía (al↓)"
+Principio Incertidumbre (Alráico),"Δx · Δp > h/2 ≈ 0_y/0_t","Limitación C densa: toda medición intersecta incapacidad | Manifestación física y cognitiva"
