@@ -2,7 +2,7 @@
 // Automaton-HSCSG — RIDF Mutual Credit Ledger (asimilado desde red-de-intercambio-federada-isaacko)
 // Perspectiva AXIOLÓGICA: VALORAR — contabilidad multilateral/bilateral, trustlines, límites
 
-import type { ToolContext } from '../agent/types.js';
+import type { ToolContext } from '../types.js';
 import { ulid } from 'ulid';
 
 /* ═════════════════════════════════════════════════════════════════
@@ -331,7 +331,7 @@ export class MutualCreditEngine {
     const id = ulid();
     const now = new Date();
     
-    const { prevHash, currentHash } = this.config.hashChain.nextHash({ ...tx, id });
+    const { prevHash, currentHash } = this.config.hashChain.nextHash({ ...tx, id, createdAt: now });
     
     const transaction: Transaction = {
       ...tx,

@@ -2,7 +2,7 @@
 // Automaton-HSCSG — RIDF Heartbeat/Gossip (asimilado desde red-de-intercambio-federada-isaacko)
 // Perspectiva TELEOLÓGICA: HACER — sincronización periódica, reconciliación, propagación
 
-import type { ToolContext } from '../agent/types.js';
+import type { ToolContext } from '../types.js';
 
 /* ═════════════════════════════════════════════════════════════════
    TIPOS — Gossip Protocol

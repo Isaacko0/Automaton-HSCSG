@@ -71,7 +71,7 @@ export const DEFAULT_CONFIG: Partial<AutomatonConfig> = {
   logLevel: "info",
   version: "0.2.0",
   skillsDir: "~/.automaton/skills",
-  maxChildren: 3,
+  maxChildren: 0,
   socialRelayUrl: "https://social.conway.tech",
 };
 
@@ -642,16 +642,16 @@ export interface TreasuryPolicy {
 }
 
 export const DEFAULT_TREASURY_POLICY: TreasuryPolicy = {
-  maxSingleTransferCents: 5000,
-  maxHourlyTransferCents: 10000,
-  maxDailyTransferCents: 25000,
-  minimumReserveCents: 1000,
-  maxX402PaymentCents: 100,
+  maxSingleTransferCents: 500,
+  maxHourlyTransferCents: 500,
+  maxDailyTransferCents: 1000,
+  minimumReserveCents: 100,
+  maxX402PaymentCents: 50,
   x402AllowedDomains: ['conway.tech'],
   transferCooldownMs: 0,
-  maxTransfersPerTurn: 2,
-  maxInferenceDailyCents: 50000,
-  requireConfirmationAboveCents: 1000,
+  maxTransfersPerTurn: 1,
+  maxInferenceDailyCents: 1000,
+  requireConfirmationAboveCents: 100,
 };
 
 // ─── Phase 1: Inbox Message Status ──────────────────────────────
