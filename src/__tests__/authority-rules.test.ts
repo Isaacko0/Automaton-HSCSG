@@ -29,6 +29,7 @@ import type {
   LimitCheckResult,
 } from "../types.js";
 import { DEFAULT_TREASURY_POLICY } from "../types.js";
+import { TEST_POLICY } from "./helpers/test-policy.js";
 import { PolicyEngine } from "../agent/policy-engine.js";
 import { createAuthorityRules } from "../agent/policy-rules/authority.js";
 import { createRateLimitRules } from "../agent/policy-rules/rate-limits.js";
@@ -571,7 +572,7 @@ describe("Financial Phase 1 Rules", () => {
 
   describe("financial.inference_daily_cap", () => {
     it("allows inference when under daily cap", () => {
-      const rules = createFinancialRules(DEFAULT_TREASURY_POLICY);
+      const rules = createFinancialRules(TEST_POLICY);
       const engine = new PolicyEngine(db, rules);
 
       const tool = createMockTool({
@@ -590,7 +591,7 @@ describe("Financial Phase 1 Rules", () => {
     });
 
     it("denies inference when daily cap exceeded", () => {
-      const rules = createFinancialRules(DEFAULT_TREASURY_POLICY);
+      const rules = createFinancialRules(TEST_POLICY);
       const engine = new PolicyEngine(db, rules);
 
       const tool = createMockTool({
@@ -612,7 +613,7 @@ describe("Financial Phase 1 Rules", () => {
 
   describe("financial.require_confirmation", () => {
     it("allows transfers under confirmation threshold", () => {
-      const rules = createFinancialRules(DEFAULT_TREASURY_POLICY);
+      const rules = createFinancialRules(TEST_POLICY);
       const engine = new PolicyEngine(db, rules);
 
       const tool = createMockTool({
@@ -628,7 +629,7 @@ describe("Financial Phase 1 Rules", () => {
     });
 
     it("quarantines transfers above confirmation threshold", () => {
-      const rules = createFinancialRules(DEFAULT_TREASURY_POLICY);
+      const rules = createFinancialRules(TEST_POLICY);
       const engine = new PolicyEngine(db, rules);
 
       const tool = createMockTool({
@@ -673,16 +674,16 @@ describe("Financial Phase 1 Rules", () => {
 
 describe("Treasury Config", () => {
   it("DEFAULT_TREASURY_POLICY has all required fields", () => {
-    expect(DEFAULT_TREASURY_POLICY.maxSingleTransferCents).toBe(5000);
-    expect(DEFAULT_TREASURY_POLICY.maxHourlyTransferCents).toBe(10000);
-    expect(DEFAULT_TREASURY_POLICY.maxDailyTransferCents).toBe(25000);
-    expect(DEFAULT_TREASURY_POLICY.minimumReserveCents).toBe(1000);
-    expect(DEFAULT_TREASURY_POLICY.maxX402PaymentCents).toBe(100);
+    expect(DEFAULT_TREASURY_POLICY.maxSingleTransferCents).toBe(500);
+    expect(DEFAULT_TREASURY_POLICY.maxHourlyTransferCents).toBe(500);
+    expect(DEFAULT_TREASURY_POLICY.maxDailyTransferCents).toBe(1000);
+    expect(DEFAULT_TREASURY_POLICY.minimumReserveCents).toBe(100);
+    expect(DEFAULT_TREASURY_POLICY.maxX402PaymentCents).toBe(50);
     expect(DEFAULT_TREASURY_POLICY.x402AllowedDomains).toEqual(["conway.tech"]);
     expect(DEFAULT_TREASURY_POLICY.transferCooldownMs).toBe(0);
-    expect(DEFAULT_TREASURY_POLICY.maxTransfersPerTurn).toBe(2);
-    expect(DEFAULT_TREASURY_POLICY.maxInferenceDailyCents).toBe(50000);
-    expect(DEFAULT_TREASURY_POLICY.requireConfirmationAboveCents).toBe(1000);
+    expect(DEFAULT_TREASURY_POLICY.maxTransfersPerTurn).toBe(1);
+    expect(DEFAULT_TREASURY_POLICY.maxInferenceDailyCents).toBe(1000);
+    expect(DEFAULT_TREASURY_POLICY.requireConfirmationAboveCents).toBe(100);
   });
 
   it("all default values are positive", () => {
