@@ -38,7 +38,7 @@ function broadcast(data) {
 const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20KZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCmVjaG8gJCEgPiB+L2F1dG9tYXRvbi5waWQK";
 
 async function startAgentScript() {
-  const cmd = `echo "${START_SCRIPT_B64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1 &`;
+  const cmd = `echo "${START_SCRIPT_B64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
   await execOnInstabox(cmd);
 }
 
@@ -48,12 +48,13 @@ function execOnInstabox(command) {
     const { exec } = require('child_process');
     const instaboxPath = 'C:/Users/Isaacko0/AppData/Local/Programs/instabox/instabox.exe';
     // Escape command for shell - replace " with \"
-    const escapedCommand = command.replace(/"/g, '\\"');
+    const escapedCommand = command.replace(/\"/g, '\\\\"');
     // Use ssh with -- to pass SSH options: -o RequestTTY=no disables TTY allocation
-    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "${escapedCommand}"`;
+    // Run command in background on remote to avoid hanging on SIGSTOP
+    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "${escapedCommand} &"`;
     console.log('[DEBUG] execOnInstabox fullCommand:', fullCommand.substring(0, 200) + '...');
     
-    const child = exec(fullCommand, { shell: true, timeout: 30000, windowsHide: true }, (error, stdout, stderr) => {
+    const child = exec(fullCommand, { shell: true, timeout: 10000, windowsHide: true }, (error, stdout, stderr) => {
       console.log('[DEBUG] execOnInstabox result:', { error: error?.message, stdout: stdout?.substring(0, 100), stderr: stderr?.substring(0, 100) });
       if (error) {
         reject(new Error(stderr || error.message));
@@ -189,12 +190,34 @@ wss.on('connection', (ws) => {
           
         case 'stopAgent':
           try {
-            await execOnInstabox('kill $(cat ~/automaton.pid 2>/dev/null) 2>/dev/null; rm -f ~/automaton.pid');
+            await execOnInstabox('pkill -f "node dist/index.js" 2>/dev/null; rm -f ~/automaton.pid ~/automaton.log');
             ws.send(JSON.stringify({ type: 'result', action: 'stopAgent', success: true, message: 'Agent stopped' }));
             const s = await getAgentStatus();
             broadcast({ type: 'status', ...s });
           } catch (e) {
             ws.send(JSON.stringify({ type: 'result', action: 'stopAgent', success: false, error: e.message }));
+          }
+          break;
+
+        case 'pauseAgent':
+          try {
+            await execOnInstabox('pkill -STOP -f "node dist/index.js" 2>/dev/null');
+            ws.send(JSON.stringify({ type: 'result', action: 'pauseAgent', success: true, message: 'Agent paused' }));
+            const s = await getAgentStatus();
+            broadcast({ type: 'status', ...s });
+          } catch (e) {
+            ws.send(JSON.stringify({ type: 'result', action: 'pauseAgent', success: false, error: e.message }));
+          }
+          break;
+
+        case 'resumeAgent':
+          try {
+            await execOnInstabox('pkill -CONT -f "node dist/index.js" 2>/dev/null');
+            ws.send(JSON.stringify({ type: 'result', action: 'resumeAgent', success: true, message: 'Agent resumed' }));
+            const s = await getAgentStatus();
+            broadcast({ type: 'status', ...s });
+          } catch (e) {
+            ws.send(JSON.stringify({ type: 'result', action: 'resumeAgent', success: false, error: e.message }));
           }
           break;
           
@@ -281,7 +304,25 @@ app.post('/api/agent/start', async (req, res) => {
 
 app.post('/api/agent/stop', async (req, res) => {
   try {
-    await execOnInstabox('kill $(cat ~/automaton.pid 2>/dev/null) 2>/dev/null; rm -f ~/automaton.pid');
+    await execOnInstabox('pkill -f "node dist/index.js" 2>/dev/null; rm -f ~/automaton.pid ~/automaton.log');
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/agent/pause', async (req, res) => {
+  try {
+    await execOnInstabox('pkill -STOP -f "node dist/index.js" 2>/dev/null');
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/agent/resume', async (req, res) => {
+  try {
+    await execOnInstabox('pkill -CONT -f "node dist/index.js" 2>/dev/null');
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });

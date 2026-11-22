@@ -301,6 +301,19 @@
               </svg>
               Reiniciar
             </button>
+            <button class="btn warning" id="pauseBtn" style="width:100%; justify-content:center; display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+              Pausar
+            </button>
+            <button class="btn success" id="resumeBtn" style="width:100%; justify-content:center; display:none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Reanudar
+            </button>
             <button class="btn danger" id="stopBtn" style="width:100%; justify-content:center;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="6" y="4" width="12" height="16" rx="2"></rect>
@@ -391,6 +404,8 @@
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const restartBtn = document.getElementById('restartBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
     const sendInstructionBtn = document.getElementById('sendInstructionBtn');
     const instructionInput = document.getElementById('instructionInput');
     const configEditor = document.getElementById('configEditor');
@@ -506,6 +521,15 @@
           statusBadge.className = 'status-badge ' + (running ? 'running' : 'stopped');
           statusText.textContent = running ? 'Ejecutándose' : 'Detenido';
           mPid.textContent = status.pid || '-';
+      
+          // Show/hide pause/resume buttons based on running state
+          if (running) {
+            pauseBtn.style.display = 'flex';
+            resumeBtn.style.display = 'none';
+          } else {
+            pauseBtn.style.display = 'none';
+            resumeBtn.style.display = 'none';
+          }
       
           // Display initial logs from status
           if (status.lastLogs && status.lastLogs.length > 0) {
@@ -652,6 +676,18 @@
       restartBtn.disabled = true;
       ws.send(JSON.stringify({ action: 'restartAgent' }));
       setTimeout(() => restartBtn.disabled = false, 5000);
+    });
+
+    pauseBtn.addEventListener('click', () => {
+      pauseBtn.disabled = true;
+      ws.send(JSON.stringify({ action: 'pauseAgent' }));
+      setTimeout(() => pauseBtn.disabled = false, 3000);
+    });
+
+    resumeBtn.addEventListener('click', () => {
+      resumeBtn.disabled = true;
+      ws.send(JSON.stringify({ action: 'resumeAgent' }));
+      setTimeout(() => resumeBtn.disabled = false, 3000);
     });
 
     sendInstructionBtn.addEventListener('click', () => {
