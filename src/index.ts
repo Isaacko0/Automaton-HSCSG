@@ -182,7 +182,7 @@ async function run(): Promise<void> {
 
   // Load wallet
   const { account } = await getWallet();
-  const apiKey = config.conwayApiKey || loadApiKeyFromConfig();
+  const apiKey = config.conwayApiKey || loadApiKeyFromConfig() || (process.env.AUTOMATON_LOCAL_MODE ? "local-mode" : "");
   if (!apiKey) {
     logger.error("No API key found. Run: automaton --provision");
     process.exit(1);
@@ -230,7 +230,7 @@ async function run(): Promise<void> {
 
   // Register automaton identity (one-time, immutable)
   const registrationState = db.getIdentity("conwayRegistrationStatus");
-  if (registrationState !== "registered") {
+  if (registrationState !== "registered" && !process.env.AUTOMATON_LOCAL_MODE) {
     try {
       const genesisPromptHash = config.genesisPrompt
         ? keccak256(toHex(config.genesisPrompt))

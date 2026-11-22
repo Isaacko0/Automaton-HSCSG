@@ -98,9 +98,9 @@ export function createInferenceClient(
     }
 
     const openAiLikeApiUrl =
-      backend === "openai" ? "https://api.openai.com" :
-      backend === "ollama" ? (ollamaBaseUrl as string).replace(/\/$/, "") :
-      apiUrl;
+          backend === "openai" ? (process.env.OPENAI_COMPAT_BASE_URL || "https://api.openai.com").replace(/\/$/, "") :
+          backend === "ollama" ? (ollamaBaseUrl as string).replace(/\/$/, "") :
+          apiUrl;
     const openAiLikeApiKey =
       backend === "openai" ? (openaiApiKey as string) :
       backend === "ollama" ? "ollama" :
@@ -170,6 +170,7 @@ function resolveInferenceBackend(
     getModelProvider?: (modelId: string) => string | undefined;
   },
 ): InferenceBackend {
+  if (process.env.OPENAI_COMPAT_BASE_URL) { if (keys.openaiApiKey) return "openai"; }
   // Registry-based routing: most accurate, no name guessing
   if (keys.getModelProvider) {
     const provider = keys.getModelProvider(model);

@@ -1,0 +1,138 @@
+diff --git a/src/conway/client.ts b/src/conway/client.ts
+index 152a3e1..1627875 100644
+--- a/src/conway/client.ts
++++ b/src/conway/client.ts
+@@ -288,6 +288,7 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
+   // ─── Credits ─────────────────────────────────────────────────
+ 
+   const getCreditsBalance = async (): Promise<number> => {
++    if (process.env.AUTOMATON_LOCAL_MODE) return Number(process.env.AUTOMATON_LOCAL_CREDITS_CENTS || 1000);
+     const result = await request("GET", "/v1/credits/balance");
+     return result.balance_cents ?? result.credits_cents ?? 0;
+   };
+diff --git a/src/conway/inference.ts b/src/conway/inference.ts
+index 8a1d58b..e11a4c9 100644
+--- a/src/conway/inference.ts
++++ b/src/conway/inference.ts
+@@ -98,7 +98,7 @@ export function createInferenceClient(
+     }
+ 
+     const openAiLikeApiUrl =
+-      backend === "openai" ? "https://api.openai.com" :
++      backend === "openai" ? (process.env.OPENAI_COMPAT_BASE_URL || "https://api.openai.com").replace(/\/$/, "") :
+       backend === "ollama" ? (ollamaBaseUrl as string).replace(/\/$/, "") :
+       apiUrl;
+     const openAiLikeApiKey =
+@@ -170,6 +170,7 @@ function resolveInferenceBackend(
+     getModelProvider?: (modelId: string) => string | undefined;
+   },
+ ): InferenceBackend {
++  if (process.env.OPENAI_COMPAT_BASE_URL) { if (keys.openaiApiKey) return "openai"; }
+   // Registry-based routing: most accurate, no name guessing
+   if (keys.getModelProvider) {
+     const provider = keys.getModelProvider(model);
+diff --git a/src/index.ts b/src/index.ts
+index 6e4c338..bc2bf3d 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -182,7 +182,7 @@ async function run(): Promise<void> {
+ 
+   // Load wallet
+   const { account } = await getWallet();
+-  const apiKey = config.conwayApiKey || loadApiKeyFromConfig();
++  const apiKey = config.conwayApiKey || loadApiKeyFromConfig() || (process.env.AUTOMATON_LOCAL_MODE ? "local-mode" : "");
+   if (!apiKey) {
+     logger.error("No API key found. Run: automaton --provision");
+     process.exit(1);
+@@ -230,7 +230,7 @@ async function run(): Promise<void> {
+ 
+   // Register automaton identity (one-time, immutable)
+   const registrationState = db.getIdentity("conwayRegistrationStatus");
+-  if (registrationState !== "registered") {
++  if (registrationState !== "registered" && !process.env.AUTOMATON_LOCAL_MODE) {
+     try {
+       const genesisPromptHash = config.genesisPrompt
+         ? keccak256(toHex(config.genesisPrompt))
+diff --git a/src/inference/types.ts b/src/inference/types.ts
+index 1187a9e..257dc0f 100644
+--- a/src/inference/types.ts
++++ b/src/inference/types.ts
+@@ -119,7 +119,7 @@ export const STATIC_MODEL_BASELINE: Omit<ModelEntry, "lastSeen" | "createdAt" |
+     enabled: true,
+   },
+   {
+-    modelId: "gpt-5.3",
++    modelId: "nvidia/nemotron-3.5-bolt-e4b",
+     provider: "openai",
+     displayName: "GPT-5.3",
+     tierMinimum: "normal",
+@@ -132,6 +132,7 @@ export const STATIC_MODEL_BASELINE: Omit<ModelEntry, "lastSeen" | "createdAt" |
+     parameterStyle: "max_completion_tokens",
+     enabled: true,
+   },
++{    modelId: "nvidia/nemotron-3-ultra-550b-a55b",    provider: "nvidia",    displayName: "Nemotron 3 Ultra",    tierMinimum: "normal",    costPer1kInput: 0,    costPer1kOutput: 0,    maxTokens: 32768,    contextWindow: 128000,    supportsTools: true,    supportsVision: false,    parameterStyle: "max_tokens",    enabled: true,  },  {    modelId: "nvidia/nemotron-3.5-bolt-e4b",    provider: "nvidia",    displayName: "Nemotron 3.5 Bolt",    tierMinimum: "low_compute",    costPer1kInput: 0,    costPer1kOutput: 0,    maxTokens: 16384,    contextWindow: 128000,    supportsTools: true,    supportsVision: false,    parameterStyle: "max_tokens",    enabled: true,  },  {    modelId: "nvidia/nemotron-3.5-lightning-30b-a3b",    provider: "nvidia",    displayName: "Nemotron 3.5 Lightning",    tierMinimum: "low_compute",    costPer1kInput: 0,    costPer1kOutput: 0,    maxTokens: 16384,    contextWindow: 128000,    supportsTools: true,    supportsVision: false,    parameterStyle: "max_tokens",    enabled: true,  },
+ ]
+ 
+ // === Default Routing Matrix ===
+@@ -139,30 +140,30 @@ export const STATIC_MODEL_BASELINE: Omit<ModelEntry, "lastSeen" | "createdAt" |
+ 
+ export const DEFAULT_ROUTING_MATRIX: RoutingMatrix = {
+   high: {
+-    agent_turn: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 8192, ceilingCents: -1 },
+-    heartbeat_triage: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
+-    safety_check: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 4096, ceilingCents: 20 },
+-    summarization: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 15 },
+-    planning: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 8192, ceilingCents: -1 },
++    agent_turn: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "nvidia/nemotron-3.5-bolt-e4b"], maxTokens: 8192, ceilingCents: -1 },
++    heartbeat_triage: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
++    safety_check: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "nvidia/nemotron-3.5-bolt-e4b"], maxTokens: 4096, ceilingCents: 20 },
++    summarization: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 15 },
++    planning: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "nvidia/nemotron-3.5-bolt-e4b"], maxTokens: 8192, ceilingCents: -1 },
+   },
+   normal: {
+-    agent_turn: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: -1 },
+-    heartbeat_triage: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
+-    safety_check: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
+-    summarization: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
+-    planning: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: -1 },
++    agent_turn: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: -1 },
++    heartbeat_triage: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
++    safety_check: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
++    summarization: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
++    planning: { candidates: ["nvidia/nemotron-3-ultra-550b-a55b", "gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: -1 },
+   },
+   low_compute: {
+-    agent_turn: { candidates: ["gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
+-    heartbeat_triage: { candidates: ["gpt-5-mini"], maxTokens: 1024, ceilingCents: 2 },
+-    safety_check: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
+-    summarization: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
+-    planning: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
++    agent_turn: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 10 },
++    heartbeat_triage: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 1024, ceilingCents: 2 },
++    safety_check: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
++    summarization: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
++    planning: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
+   },
+   critical: {
+-    agent_turn: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 3 },
+-    heartbeat_triage: { candidates: ["gpt-5-mini"], maxTokens: 512, ceilingCents: 1 },
+-    safety_check: { candidates: ["gpt-5-mini"], maxTokens: 1024, ceilingCents: 2 },
++    agent_turn: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 2048, ceilingCents: 3 },
++    heartbeat_triage: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 512, ceilingCents: 1 },
++    safety_check: { candidates: ["nvidia/nemotron-3.5-lightning-30b-a3b", "gpt-5-mini"], maxTokens: 1024, ceilingCents: 2 },
+     summarization: { candidates: [], maxTokens: 0, ceilingCents: 0 },
+     planning: { candidates: [], maxTokens: 0, ceilingCents: 0 },
+   },
+diff --git a/src/types.ts b/src/types.ts
+index ea90398..d1153c5 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -1197,7 +1197,7 @@ export const DEFAULT_MEMORY_BUDGET: MemoryBudget = {
+ 
+ // === Phase 2.3: Inference & Model Strategy Types ===
+ 
+-export type ModelProvider = "openai" | "anthropic" | "conway" | "ollama" | "other";
++export type ModelProvider = "openai" | "anthropic" | "conway" | "ollama" | "nvidia" | "other";
+ 
+ export type InferenceTaskType =
+   | "agent_turn"

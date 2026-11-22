@@ -288,9 +288,10 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   // ─── Credits ─────────────────────────────────────────────────
 
   const getCreditsBalance = async (): Promise<number> => {
-    const result = await request("GET", "/v1/credits/balance");
-    return result.balance_cents ?? result.credits_cents ?? 0;
-  };
+      if (process.env.AUTOMATON_LOCAL_MODE) return Number(process.env.AUTOMATON_LOCAL_CREDITS_CENTS || 1000);
+      const result = await request("GET", "/v1/credits/balance");
+      return result.balance_cents ?? result.credits_cents ?? 0;
+    };
 
   const getCreditsPricing = async (): Promise<PricingTier[]> => {
     const result = await request("GET", "/v1/credits/pricing");

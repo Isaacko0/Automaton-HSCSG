@@ -119,19 +119,19 @@ export const STATIC_MODEL_BASELINE: Omit<ModelEntry, "lastSeen" | "createdAt" | 
     enabled: true,
   },
   {
-    modelId: "gpt-5.3",
-    provider: "openai",
-    displayName: "GPT-5.3",
-    tierMinimum: "normal",
-    costPer1kInput: 20,    // $2.00/M
-    costPer1kOutput: 80,   // $8.00/M
-    maxTokens: 32768,
-    contextWindow: 1047576,
-    supportsTools: true,
-    supportsVision: true,
-    parameterStyle: "max_completion_tokens",
-    enabled: true,
-  },
+      modelId: "nvidia/nemotron-3.5-bolt-e4b",
+      provider: "openai",
+      displayName: "GPT-5.3",
+      tierMinimum: "normal",
+      costPer1kInput: 20,    // $2.00/M
+      costPer1kOutput: 80,   // $8.00/M
+      maxTokens: 32768,
+      contextWindow: 1047576,
+      supportsTools: true,
+      supportsVision: true,
+      parameterStyle: "max_completion_tokens",
+      enabled: true,
+    },
 ];
 
 // === Default Routing Matrix ===
