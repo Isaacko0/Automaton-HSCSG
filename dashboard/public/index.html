@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosatecaton Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1117;
+      --bg-secondary: #161b22;
+      --fg: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --success: #3fb950;
+      --warning: #d29922;
+      --danger: #f85149;
+      --border: #30363d;
+      --card: #161b22;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo svg { width: 32px; height: 32px; color: var(--accent); }
+    h1 { font-size: 1.25rem; font-weight: 600; }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 16px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-badge.running { background: rgba(63, 185, 80, 0.2); color: var(--success); }
+    .status-badge.stopped { background: rgba(248, 81, 73, 0.2); color: var(--danger); }
+    .status-badge .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor;
+    }
+    .status-badge.running .dot { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--fg);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover { background: var(--border); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; }
+    .btn.primary:hover { background: var(--accent-hover); }
+    .btn.danger { background: var(--danger); border-color: var(--danger); color: white; }
+    .btn.danger:hover { background: #ff6b64; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    main { flex: 1; padding: 24px; display: grid; grid-template-columns: 1fr 420px; gap: 24px; }
+    @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-title { font-size: 0.875rem; font-weight: 600; }
+    .panel-content { flex: 1; overflow: auto; padding: 16px; }
+    .log-container {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .log-line { margin-bottom: 2px; }
+    .log-line .timestamp { color: var(--muted); }
+    .log-line .level-info { color: var(--accent); }
+    .log-line .level-warn { color: var(--warning); }
+    .log-line .level-error { color: var(--danger); }
+    .log-line .level-success { color: var(--success); }
+    .log-line .tool { color: #a371f7; }
+    .log-line .model { color: #ffa657; }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .metric {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+    }
+    .metric-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 1.25rem; font-weight: 600; font-family: var(--mono); margin-top: 4px; }
+    .config-editor {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--fg);
+      width: 100%;
+      min-height: 300px;
+      resize: vertical;
+    }
+    .config-editor:focus { outline: none; border-color: var(--accent); }
+    .instruction-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 0.875rem;
+      color: var(--fg);
+      resize: vertical;
+      min-height: 80px;
+      margin-bottom: 12px;
+    }
+    .instruction-input:focus { outline: none; border-color: var(--accent); }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .connection-status {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; color: var(--muted);
+    }
+    .connection-status.connected { color: var(--success); }
+    .connection-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .connection-status.connected .dot { background: var(--success); animation: pulse 2s infinite; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .tab {
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+    }
+    .tab:hover { color: var(--fg); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .skill-list { display: flex; flex-direction: column; gap: 8px; }
+    .skill-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.8rem;
+    }
+    .skill-name { font-family: var(--mono); }
+    .skill-path { font-size: 0.7rem; color: var(--muted); }
+    .empty-state { color: var(--muted); text-align: center; padding: 32px; font-size: 0.875rem; }
+    .scroll-area { max-height: 500px; overflow-y: auto; }
+    .log-controls { display: flex; gap: 8px; align-items: center; }
+    .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); cursor: pointer; }
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 12px 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+        <h1>Cosatecaton</h1>
+      </div>
+      <span class="status-badge stopped" id="statusBadge">
+        <span class="dot"></span>
+        <span id="statusText">Detenido</span>
+      </span>
+    </div>
+    <div class="header-right" style="display:flex; align-items:center; gap:12px;">
+      <div class="connection-status" id="wsStatus">
+        <span class="dot"></span>
+        <span>Desconectado</span>
+      </div>
+      <button class="btn primary" id="refreshBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="main-column">
+      <div class="panel" style="flex:1; min-height:500px;">
+        <div class="panel-header">
+          <span class="panel-title">Log en Tiempo Real</span>
+          <div class="log-controls">
+            <label class="checkbox-label">
+              <input type="checkbox" id="autoScroll" checked> Auto-scroll
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="followLog" disabled> Seguir
+            </label>
+            <button class="btn" id="clearLog" style="padding:4px 8px; font-size:0.75rem;">Limpiar</button>
+          </div>
+        </div>
+        <div class="panel-content">
+          <div class="log-container scroll-area" id="logContainer">
+            <div class="empty-state">Conectando...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <div class="panel section">
+        <div class="panel-header">
+          <span class="panel-title">Estado del Agente</span>
+        </div>
+        <div class="panel-content">
+          <div class="metric-grid" id="metrics">
+            <div class="metric"><div class="metric-label">PID</div><div class="metric-value" id="mPid">-</div></div>
+            <div class="metric"><div class="metric-label">Uptime</div><div class="metric-value" id="mUptime">-</div></div>
+            <div class="metric"><div class="metric-label">Turnos</div><div class="metric-value" id="mTurns">-</div></div>
+            <div class="metric"><div class="metric-label">Créditos</div><div class="metric-value" id="mCredits">-</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <div class="panel-header">
+          <span class="panel-title">Control</span>
+        </div>
+        <div class="panel-content">
+          <div class="btn-group" style="flex-direction:column;">
+            <button class="btn primary" id="startBtn" style="width:100%; justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Iniciar Agente
+            </button>
+            <button class="btn" id="restartBtn" style="width:100%; justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              Reiniciar
+            </button>
+            <button class="btn danger" id="stopBtn" style="width:100%; justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="4" width="12" height="16" rx="2"></rect>
+              </svg>
+              Detener
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <div class="panel-header">
+          <span class="panel-title">Instrucción al Agente</span>
+        </div>
+        <div class="panel-content">
+          <textarea class="instruction-input" id="instructionInput" placeholder="Escribe una instrucción para Cosatecaton...&#10;Ej: 'Lee constitution.md en /data/home/Automaton-HSCSG/ y escribe un resumen en SOUL.md'"></textarea>
+          <button class="btn primary" id="sendInstructionBtn" style="width:100%; justify-content:center;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            Enviar Instrucción
+          </button>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <div class="tabs" id="configTabs">
+          <button class="tab active" data-tab="config">Config JSON</button>
+          <button class="tab" data-tab="skills">Skills</button>
+          <button class="tab" data-tab="params">Parámetros Clave</button>
+        </div>
+        <div class="panel-content">
+          <div class="tab-panel active" id="tab-config">
+            <textarea class="config-editor" id="configEditor" placeholder="Cargando config..."></textarea>
+            <div style="margin-top:12px;">
+              <button class="btn primary" id="saveConfigBtn" style="width:100%; justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                Guardar Configuración
+              </button>
+            </div>
+          </div>
+          <div class="tab-panel" id="tab-skills">
+            <div class="skill-list scroll-area" id="skillList">
+              <div class="empty-state">Cargando skills...</div>
+            </div>
+          </div>
+          <div class="tab-panel" id="tab-params">
+            <div class="metric-grid" id="keyParams">
+              <div class="metric"><div class="metric-label">Modelo</div><div class="metric-value" id="pModel">-</div></div>
+              <div class="metric"><div class="metric-label">Temp</div><div class="metric-value" id="pTemp">-</div></div>
+              <div class="metric"><div class="metric-label">Max Tokens</div><div class="metric-value" id="pMaxTokens">-</div></div>
+              <div class="metric"><div class="metric-label">Provider</div><div class="metric-value" id="pProvider">-</div></div>
+              <div class="metric"><div class="metric-label">Max Transfer</div><div class="metric-value" id="pMaxTransfer">-</div></div>
+              <div class="metric"><div class="metric-label">Daily Limit</div><div class="metric-value" id="pDailyLimit">-</div></div>
+              <div class="metric"><div class="metric-label">Reserva Mín</div><div class="metric-value" id="pReserve">-</div></div>
+              <div class="metric"><div class="metric-label">Max Children</div><div class="metric-value" id="pChildren">-</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // State
+    let ws = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 10;
+    let logLines = [];
+    const MAX_LOG_LINES = 1000;
+
+    // DOM Elements
+    const logContainer = document.getElementById('logContainer');
+    const statusBadge = document.getElementById('statusBadge');
+    const statusText = document.getElementById('statusText');
+    const wsStatus = document.getElementById('wsStatus');
+    const followLog = document.getElementById('followLog');
+    const autoScroll = document.getElementById('autoScroll');
+    const clearLogBtn = document.getElementById('clearLog');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const sendInstructionBtn = document.getElementById('sendInstructionBtn');
+    const instructionInput = document.getElementById('instructionInput');
+    const configEditor = document.getElementById('configEditor');
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    const skillList = document.getElementById('skillList');
+    const keyParams = document.getElementById('keyParams');
+    const toast = document.getElementById('toast');
+
+    // Metrics elements
+    const mPid = document.getElementById('mPid');
+    const mUptime = document.getElementById('mUptime');
+    const mTurns = document.getElementById('mTurns');
+    const mCredits = document.getElementById('mCredits');
+    const pModel = document.getElementById('pModel');
+    const pTemp = document.getElementById('pTemp');
+    const pMaxTokens = document.getElementById('pMaxTokens');
+    const pProvider = document.getElementById('pProvider');
+    const pMaxTransfer = document.getElementById('pMaxTransfer');
+    const pDailyLimit = document.getElementById('pDailyLimit');
+    const pReserve = document.getElementById('pReserve');
+    const pChildren = document.getElementById('pChildren');
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Toast
+    function showToast(message, type = 'success') {
+      toast.textContent = message;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // WebSocket
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        console.log('WS connected');
+        reconnectAttempts = 0;
+        wsStatus.classList.add('connected');
+        wsStatus.querySelector('span:last-child').textContent = 'Conectado';
+        followLog.disabled = false;
+        // Request initial status
+        ws.send(JSON.stringify({ action: 'getStatus' }));
+        // Auto-start log tailing
+        ws.send(JSON.stringify({ action: 'startTail' }));
+        followLog.checked = true;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          handleMessage(msg);
+        } catch (e) {
+          console.error('WS parse error:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WS closed');
+        wsStatus.classList.remove('connected');
+        wsStatus.querySelector('span:last-child').textContent = 'Desconectado';
+        followLog.disabled = true;
+        followLog.checked = false;
+        if (reconnectAttempts < MAX_RECONNECT) {
+          reconnectAttempts++;
+          setTimeout(connect, 1000 * Math.min(reconnectAttempts, 5));
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('WS error:', err);
+      };
+    }
+
+    function handleMessage(msg) {
+      switch (msg.type) {
+        case 'status':
+          updateStatus(msg);
+          break;
+        case 'log':
+          appendLog(msg.line);
+          break;
+        case 'config':
+          configEditor.value = JSON.stringify(msg.config, null, 2);
+          updateKeyParams(msg.config);
+          break;
+        case 'skills':
+          renderSkills(msg.skills);
+          break;
+        case 'result':
+          showToast(msg.message || (msg.success ? 'OK' : 'Error'), msg.success ? 'success' : 'error');
+          if (msg.success && (msg.message?.includes('started') || msg.message.includes('stopped') || msg.message.includes('restarted'))) {
+            setTimeout(() => ws.send(JSON.stringify({ action: 'getStatus' })), 1500);
+          }
+          break;
+        case 'error':
+          showToast(msg.message, 'error');
+          break;
+      }
+    }
+
+    function updateStatus(status) {
+          const running = status.running;
+          statusBadge.className = 'status-badge ' + (running ? 'running' : 'stopped');
+          statusText.textContent = running ? 'Ejecutándose' : 'Detenido';
+          mPid.textContent = status.pid || '-';
+      
+          // Display initial logs from status
+          if (status.lastLogs && status.lastLogs.length > 0) {
+            logLines = [];
+            logContainer.innerHTML = '';
+            for (const line of status.lastLogs) {
+              appendLog(line);
+            }
+          }
+      
+          // Parse metrics from last logs
+          if (status.lastLogs) {
+            let turns = 0;
+            let credits = '-';
+            let uptime = '-';
+        
+            for (const line of status.lastLogs) {
+              if (line.includes('Turn ') && line.includes('tokens')) turns++;
+              if (line.includes('Credits:') || line.includes('Credit balance:')) {
+                const match = line.match(/\$([\d.]+)/);
+                if (match) credits = '$' + match[1];
+              }
+              if (line.includes('etime') || line.includes('ELAPSED')) {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length > 1) uptime = parts[1];
+              }
+            }
+            mTurns.textContent = turns;
+            mCredits.textContent = credits;
+            mUptime.textContent = uptime;
+          }
+        }
+
+    function appendLog(line) {
+      logLines.push(line);
+      if (logLines.length > MAX_LOG_LINES) logLines.shift();
+      
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.innerHTML = formatLogLine(line);
+      logContainer.appendChild(div);
+      
+      if (autoScroll.checked || followLog.checked) {
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+    }
+
+    function formatLogLine(line) {
+      try {
+        // Parse JSON log
+        const obj = JSON.parse(line);
+        const time = new Date(obj.timestamp).toLocaleTimeString();
+        const level = obj.level || 'info';
+        const module = obj.module || '';
+        const message = obj.message || '';
+        
+        let html = `<span class="timestamp">${time}</span> `;
+        html += `<span class="level-${level}">[${level.toUpperCase()}]</span> `;
+        if (module) html += `<span class="muted">[${module}]</span> `;
+        
+        // Highlight special patterns
+                let msg = message
+                  .replace(/\[TOOL\] (\w+)\(/g, '<span class="tool">[TOOL] $1(</span>')
+                  .replace(/\[THINK\] Routing inference \(tier: (\w+), model: ([^)]+)\)/g, '<span class="tool">[THINK]</span> Routing inference (tier: <span class="model">$1</span>, model: <span class="model">$2</span>)')
+                  .replace(/\[WAKE UP\]/g, '<span class="level-success">[WAKE UP]</span>')
+                  .replace(/\[ERROR\]/g, '<span class="level-error">[ERROR]</span>')
+                  .replace(/\[FATAL\]/g, '<span class="level-error">[FATAL]</span>')
+                  .replace(/"([^"]*)"/g, '<span class="string">"$1"</span>');
+        
+        html += msg;
+        return html;
+      } catch {
+        // Plain text
+        return `<span class="timestamp">${new Date().toLocaleTimeString()}</span> ${escapeHtml(line)}`;
+      }
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+    }
+
+    function renderSkills(skillsText) {
+      const lines = skillsText.split('\\n').filter(l => l.trim());
+      if (lines.length === 0) {
+        skillList.innerHTML = '<div class="empty-state">No hay skills</div>';
+        return;
+      }
+      skillList.innerHTML = lines.map(line => {
+        const parts = line.trim().split(/\\s+/);
+        const name = parts[parts.length - 1];
+        return `<div class="skill-item"><span class="skill-name">${escapeHtml(name)}</span><span class="skill-path">${escapeHtml(line)}</span></div>`;
+      }).join('');
+    }
+
+    function updateKeyParams(config) {
+      const strat = config.modelStrategy || {};
+      const treasury = config.treasuryPolicy || {};
+      
+      pModel.textContent = config.inferenceModel || strat.inferenceModel || '-';
+      pTemp.textContent = '-'; // Not in config
+      pMaxTokens.textContent = config.maxTokensPerTurn || strat.maxTokensPerTurn || '-';
+      pProvider.textContent = config.inferenceModel?.includes('nvidia') ? 'nvidia' : 'openai';
+      pMaxTransfer.textContent = (treasury.maxSingleTransferCents || 0) + '¢';
+      pDailyLimit.textContent = (treasury.maxDailyTransferCents || 0) + '¢';
+      pReserve.textContent = (treasury.minimumReserveCents || 0) + '¢';
+      pChildren.textContent = config.maxChildren || '-';
+    }
+
+    // Event handlers
+    refreshBtn.addEventListener('click', () => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'getStatus' }));
+        ws.send(JSON.stringify({ action: 'getConfig' }));
+        ws.send(JSON.stringify({ action: 'getSkills' }));
+      }
+    });
+
+    followLog.addEventListener('change', () => {
+      if (followLog.checked && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'startTail' }));
+      } else {
+        ws.send(JSON.stringify({ action: 'stopTail' }));
+      }
+    });
+
+    clearLogBtn.addEventListener('click', () => {
+      logLines = [];
+      logContainer.innerHTML = '';
+    });
+
+    startBtn.addEventListener('click', () => {
+      startBtn.disabled = true;
+      ws.send(JSON.stringify({ action: 'startAgent' }));
+      setTimeout(() => startBtn.disabled = false, 3000);
+    });
+
+    stopBtn.addEventListener('click', () => {
+      stopBtn.disabled = true;
+      ws.send(JSON.stringify({ action: 'stopAgent' }));
+      setTimeout(() => stopBtn.disabled = false, 3000);
+    });
+
+    restartBtn.addEventListener('click', () => {
+      restartBtn.disabled = true;
+      ws.send(JSON.stringify({ action: 'restartAgent' }));
+      setTimeout(() => restartBtn.disabled = false, 5000);
+    });
+
+    sendInstructionBtn.addEventListener('click', () => {
+      const instruction = instructionInput.value.trim();
+      if (!instruction) return showToast('Instrucción vacía', 'error');
+      sendInstructionBtn.disabled = true;
+      // Use REST API for instruction
+      fetch('/api/instruction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instruction })
+      }).then(r => r.json()).then(data => {
+        showToast(data.success ? 'Instrucción enviada' : 'Error: ' + data.error, data.success ? 'success' : 'error');
+      }).catch(e => showToast('Error: ' + e.message, 'error'));
+      setTimeout(() => sendInstructionBtn.disabled = false, 2000);
+    });
+
+    saveConfigBtn.addEventListener('click', () => {
+      try {
+        const config = JSON.parse(configEditor.value);
+        saveConfigBtn.disabled = true;
+        ws.send(JSON.stringify({ action: 'updateConfig', config }));
+        setTimeout(() => saveConfigBtn.disabled = false, 2000);
+      } catch (e) {
+        showToast('JSON inválido: ' + e.message, 'error');
+      }
+    });
+
+    // Initial connect
+    connect();
+
+    // Periodic status refresh
+    setInterval(() => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'getStatus' }));
+      }
+    }, 10000);
+  </script>
+</body>
+</html>
