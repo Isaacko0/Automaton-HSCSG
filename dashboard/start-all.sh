@@ -37,8 +37,10 @@ echo "========================================"
 echo
 echo "Botones:"
 echo "  [+] Iniciar Agente  - levanta Cosatecon en Instabox"
-echo "  [-] Detener         - mata el proceso"
+echo "  [||] Pausar         - pausa el agente (SIGSTOP)"
+echo "  [>] Reanudar        - reanuda el agente (SIGCONT)"
 echo "  [R] Reiniciar       - stop + start"
+echo "  [-] Detener         - mata TODOS los procesos (pkill -f)"
 echo
 echo "Logs en tiempo real via WebSocket (auto-conecta)"
 echo
