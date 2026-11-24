@@ -97,39 +97,81 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   };
 
   const hashIdentityPayload = (payload: Record<string, string>): `0x${string}` => {
-    const canonical = canonicalizePayload(payload);
-    return keccak256(toHex(canonical));
-  };
+      const canonical = canonicalizePayload(payload);
+      return keccak256(toHex(canonical));
+    };
 
+    // ─── Local Mode Detection ──────────────────────────────────────
+    // In AUTOMATON_LOCAL_MODE=1, we run without Conway API.
+    // Tools execute via SSH on the Instabox machine where the agent runs.
+    const isLocalMode = process.env.AUTOMATON_LOCAL_MODE === "1";
 
-  // ─── Sandbox Operations (own sandbox) ────────────────────────
-  // When sandboxId is empty, automatically fall back to local execution.
-
-  const isLocal = !sandboxId;
-
-  const execLocal = (command: string, timeout?: number): ExecResult => {
-    try {
-      const stdout = execSync(command, {
-        timeout: timeout || 30_000,
-        encoding: "utf-8",
-        maxBuffer: 10 * 1024 * 1024,
-        cwd: process.env.HOME || "/root",
+    // ─── SSH Execution for Local Mode ──────────────────────────────
+    // Uses instabox.exe to run commands on the remote Instabox machine.
+    const execOnInstabox = (command: string): Promise<{ stdout: string; stderr: string; exitCode: number }> => {
+      return new Promise((resolve, reject) => {
+        const { exec } = require("child_process");
+        const instaboxPath = process.env.INSTABOX_PATH || "C:/Users/Isaacko0/AppData/Local/Programs/instabox/instabox.exe";
+        const boxName = process.env.INSTABOX_BOX || "box-40416d";
+        // Escape command for shell
+        const escapedCommand = command.replace(/"/g, '\\"');
+        const fullCommand = `"${instaboxPath}" ssh ${boxName} -- -o RequestTTY=no "${escapedCommand}"`;
+        console.log("[DEBUG ConwayClient] execOnInstabox:", fullCommand.substring(0, 200) + "...");
+      
+        const child = exec(fullCommand, { shell: true, timeout: 60000, windowsHide: true }, (error: Error | null, stdout: string, stderr: string) => {
+          console.log("[DEBUG ConwayClient] result:", { error: error?.message, stdout: stdout?.substring(0, 100), stderr: stderr?.substring(0, 100) });
+          if (error) {
+                      const execError = error as Error & { code?: number; signal?: string };
+                      resolve({
+                        stdout: stdout || "",
+                        stderr: stderr || error.message,
+                        exitCode: execError.code ?? 1,
+                      });
+                    } else {
+            resolve({ stdout: stdout || "", stderr: stderr || "", exitCode: 0 });
+          }
+        });
+      
+        child.on("timeout", () => {
+          console.log("[DEBUG ConwayClient] timeout, killing child");
+          child.kill("SIGKILL");
+          resolve({ stdout: "", stderr: "Command timeout", exitCode: 124 });
+        });
       });
-      return { stdout: stdout || "", stderr: "", exitCode: 0 };
-    } catch (err: any) {
-      return {
-        stdout: err.stdout || "",
-        stderr: err.stderr || err.message || "",
-        exitCode: err.status ?? 1,
-      };
-    }
-  };
+    };
 
-  const exec = async (
-    command: string,
-    timeout?: number,
-  ): Promise<ExecResult> => {
-    if (isLocal) return execLocal(command, timeout);
+    // ─── Local Execution (when no sandboxId) ───────────────────────
+    const isLocal = !sandboxId;
+
+    const execLocal = (command: string, timeout?: number): ExecResult => {
+      try {
+        const stdout = execSync(command, {
+          timeout: timeout || 30_000,
+          encoding: "utf-8",
+          maxBuffer: 10 * 1024 * 1024,
+          cwd: process.env.HOME || "/root",
+        });
+        return { stdout: stdout || "", stderr: "", exitCode: 0 };
+      } catch (err: any) {
+        return {
+          stdout: err.stdout || "",
+          stderr: err.stderr || err.message || "",
+          exitCode: err.status ?? 1,
+        };
+      }
+    };
+
+    const exec = async (
+      command: string,
+      timeout?: number,
+    ): Promise<ExecResult> => {
+      // Local mode: execute via SSH on Instabox
+      if (isLocalMode) {
+        const result = await execOnInstabox(command);
+        return { stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode };
+      }
+      // No sandboxId: execute locally on this machine
+      if (isLocal) return execLocal(command, timeout);
 
     try {
       const result = await request(
@@ -159,23 +201,40 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   };
 
   const resolveLocalPath = (filePath: string): string =>
-    filePath.startsWith("~")
-      ? nodePath.join(process.env.HOME || "/root", filePath.slice(1))
-      : filePath;
+      filePath.startsWith("~")
+        ? nodePath.join(process.env.HOME || "/root", filePath.slice(1))
+        : filePath;
 
-  const writeFile = async (
-    filePath: string,
-    content: string,
-  ): Promise<void> => {
-    if (isLocal) {
-      const resolved = resolveLocalPath(filePath);
-      const dir = nodePath.dirname(resolved);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+    const resolveRemotePath = (filePath: string): string =>
+      filePath.startsWith("~")
+        ? `/home/isaacko0${filePath.slice(1)}`
+        : filePath;
+
+    const writeFile = async (
+      filePath: string,
+      content: string,
+    ): Promise<void> => {
+      // Local mode: write via SSH on Instabox
+      if (isLocalMode) {
+        const remotePath = resolveRemotePath(filePath);
+        const escapedContent = content.replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        const cmd = `mkdir -p "$(dirname "${remotePath}")" && cat > "${remotePath}" << 'EOF'\n${escapedContent}\nEOF`;
+        const result = await execOnInstabox(cmd);
+        if (result.exitCode !== 0) {
+          throw new Error(`Remote write failed: ${result.stderr}`);
+        }
+        return;
       }
-      fs.writeFileSync(resolved, content, "utf-8");
-      return;
-    }
+      // No sandboxId: write locally on this machine
+      if (isLocal) {
+        const resolved = resolveLocalPath(filePath);
+        const dir = nodePath.dirname(resolved);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(resolved, content, "utf-8");
+        return;
+      }
     try {
       await request("POST", `/v1/sandboxes/${sandboxId}/files/upload/json`, {
         path: filePath,
@@ -194,9 +253,19 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   };
 
   const readFile = async (filePath: string): Promise<string> => {
-    if (isLocal) {
-      return fs.readFileSync(resolveLocalPath(filePath), "utf-8");
-    }
+      // Local mode: read via SSH on Instabox
+      if (isLocalMode) {
+        const remotePath = resolveRemotePath(filePath);
+        const result = await execOnInstabox(`cat "${remotePath}"`);
+        if (result.exitCode !== 0) {
+          throw new Error(`Remote read failed: ${result.stderr}`);
+        }
+        return result.stdout;
+      }
+      // No sandboxId: read locally on this machine
+      if (isLocal) {
+        return fs.readFileSync(resolveLocalPath(filePath), "utf-8");
+      }
     try {
       const result = await request(
         "GET",
@@ -218,13 +287,13 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   };
 
   const exposePort = async (port: number): Promise<PortInfo> => {
-    if (isLocal) {
-      return {
-        port,
-        publicUrl: `http://localhost:${port}`,
-        sandboxId: "local",
-      };
-    }
+      if (isLocalMode || isLocal) {
+        return {
+          port,
+          publicUrl: `http://localhost:${port}`,
+          sandboxId: isLocalMode ? sandboxId : "local",
+        };
+      }
     const result = await request(
       "POST",
       `/v1/sandboxes/${sandboxId}/ports/expose`,
@@ -238,7 +307,7 @@ export function createConwayClient(options: ConwayClientOptions): ConwayClient {
   };
 
   const removePort = async (port: number): Promise<void> => {
-    if (isLocal) return;
+      if (isLocalMode || isLocal) return;
     await request("DELETE", `/v1/sandboxes/${sandboxId}/ports/${port}`);
   };
 
