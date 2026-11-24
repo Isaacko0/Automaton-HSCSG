@@ -196,7 +196,9 @@ async function chatViaOpenAiCompatible(params: {
   backend: "conway" | "openai" | "ollama";
   httpClient: ResilientHttpClient;
 }): Promise<InferenceResponse> {
-  const resp = await params.httpClient.request(`${params.apiUrl}/v1/chat/completions`, {
+  // Handle base URLs that already include /v1 (e.g., NVIDIA's integrate.api.nvidia.com/v1)
+  const baseUrl = params.apiUrl.replace(/\/v1\/?$/, "");
+  const resp = await params.httpClient.request(`${baseUrl}/v1/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
