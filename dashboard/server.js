@@ -35,39 +35,56 @@ function broadcast(data) {
   });
 }
 
-const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRP\nTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRl\nZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2lu\ndGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hk\ndU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2\nMl96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4m\nMSAmCmVjaG8gJCEgPiB+L2F1dG9tYXRvbi5waWQK";
+const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCk5PREVfUElEPSQhCmVjaG8gJE5PREVfUElEID4gfi9hdXRvbWF0b24ucGlkCndhaXQgJE5PREVfUElECg==";
 
 async function startAgentScript() {
-  const cmd = `echo "${START_SCRIPT_B64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
+  // Write the start script to a file on the remote machine using a heredoc
+  // This avoids complex shell escaping issues with base64 content
+  const scriptContent = `#!/bin/bash
+cd /data/home/Automaton-HSCSG
+export AUTOMATON_LOCAL_MODE=1
+export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_API_KEY=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
+nohup node dist/index.js --run > ~/automaton.log 2>&1 &
+NODE_PID=\$!
+echo \$NODE_PID > ~/automaton.pid
+wait \$NODE_PID`;
+
+  // Use cat with heredoc to write the script remotely
+  const cmd = `cat > /tmp/start_agent.sh << 'EOF'\n${scriptContent}\nEOF\nchmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
   await execOnInstabox(cmd);
 }
 
 // Execute command on Instabox via instabox.exe
+// Uses a heredoc to write a script file on the remote side, avoiding shell escaping issues
 function execOnInstabox(command) {
   return new Promise((resolve, reject) => {
     const { exec } = require('child_process');
     const instaboxPath = 'C:/Users/Isaacko0/AppData/Local/Programs/instabox/instabox.exe';
-    // Escape command for shell - replace " with \"
-    const escapedCommand = command.replace(/\"/g, '\\\\"');
-    // Use ssh with -- to pass SSH options: -o RequestTTY=no disables TTY allocation
-    // Run command in background on remote to avoid hanging on SIGSTOP
-    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "${escapedCommand} &"`;
+    // Write command to a script file on remote, then execute it
+    // This avoids complex shell escaping issues
+    const scriptName = `/tmp/exec_${Date.now()}_${Math.random().toString(36).slice(2)}.sh`;
+    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "cat > ${scriptName} << 'REMOTE_EOF'\n${command}\nREMOTE_EOF\nchmod +x ${scriptName} && ${scriptName}; rm -f ${scriptName}"`;
     console.log('[DEBUG] execOnInstabox fullCommand:', fullCommand.substring(0, 200) + '...');
     
-    const child = exec(fullCommand, { shell: true, timeout: 10000, windowsHide: true }, (error, stdout, stderr) => {
+    const child = exec(fullCommand, { shell: true, timeout: 60000, windowsHide: true }, (error, stdout, stderr) => {
       console.log('[DEBUG] execOnInstabox result:', { error: error?.message, stdout: stdout?.substring(0, 100), stderr: stderr?.substring(0, 100) });
       if (error) {
-        reject(new Error(stderr || error.message));
+        resolve({
+          stdout: stdout || "",
+          stderr: stderr || error.message,
+          exitCode: error.code ?? 1,
+        });
       } else {
-        resolve(stdout);
+        resolve({ stdout: stdout || "", stderr: stderr || "", exitCode: 0 });
       }
     });
     
-    // Force kill if timeout
     child.on('timeout', () => {
       console.log('[DEBUG] execOnInstabox timeout, killing child');
       child.kill('SIGKILL');
-      reject(new Error('Command timeout'));
+      resolve({ stdout: "", stderr: "Command timeout", exitCode: 124 });
     });
   });
 }
@@ -76,12 +93,23 @@ function execOnInstabox(command) {
 async function getAgentStatus() {
   try {
     const pidOutput = await execOnInstabox('cat ~/automaton.pid 2>/dev/null || echo ""');
-    const pid = pidOutput.trim();
+    let pid = pidOutput.trim();
     
     if (!pid) return { running: false, pid: null };
     
-    const psOutput = await execOnInstabox(`ps -p ${pid} -o pid,etime,cmd 2>/dev/null || echo ""`);
-    const running = psOutput.includes(pid);
+    // Check if the PID is actually the node process; if not, find the child node process
+    let psOutput = await execOnInstabox(`ps -p ${pid} -o pid,stat,cmd 2>/dev/null || echo ""`);
+    if (!psOutput.includes("node dist/index.js")) {
+      // PID might be the bash wrapper; find the actual node process
+      const pgrepOutput = await execOnInstabox('pgrep -f "^node dist/index.js" 2>/dev/null | head -1');
+      const nodePid = pgrepOutput.trim();
+      if (nodePid) {
+        pid = nodePid;
+        psOutput = await execOnInstabox(`ps -p ${pid} -o pid,stat,cmd 2>/dev/null || echo ""`);
+      }
+    }
+    
+    const running = psOutput.includes("node dist/index.js");
     
     // Get last log lines
     const logOutput = await execOnInstabox('tail -20 ~/automaton.log 2>/dev/null || echo "No log file"');
@@ -190,7 +218,7 @@ wss.on('connection', (ws) => {
           
         case 'stopAgent':
           try {
-            await execOnInstabox('pkill -f "node dist/index.js" 2>/dev/null; rm -f ~/automaton.pid ~/automaton.log');
+            await execOnInstabox("pkill -f 'node dist/index.js' 2>/dev/null; rm -f ~/automaton.pid ~/automaton.log");
             ws.send(JSON.stringify({ type: 'result', action: 'stopAgent', success: true, message: 'Agent stopped' }));
             const s = await getAgentStatus();
             broadcast({ type: 'status', ...s });
@@ -201,7 +229,7 @@ wss.on('connection', (ws) => {
 
         case 'pauseAgent':
           try {
-            await execOnInstabox('pkill -STOP -f "node dist/index.js" 2>/dev/null');
+            await execOnInstabox("pkill -STOP -f 'node dist/index.js' 2>/dev/null");
             ws.send(JSON.stringify({ type: 'result', action: 'pauseAgent', success: true, message: 'Agent paused' }));
             const s = await getAgentStatus();
             broadcast({ type: 'status', ...s });
@@ -212,7 +240,7 @@ wss.on('connection', (ws) => {
 
         case 'resumeAgent':
           try {
-            await execOnInstabox('pkill -CONT -f "node dist/index.js" 2>/dev/null');
+            await execOnInstabox("pkill -CONT -f 'node dist/index.js' 2>/dev/null");
             ws.send(JSON.stringify({ type: 'result', action: 'resumeAgent', success: true, message: 'Agent resumed' }));
             const s = await getAgentStatus();
             broadcast({ type: 'status', ...s });

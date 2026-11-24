@@ -119,31 +119,45 @@ export const STATIC_MODEL_BASELINE: Omit<ModelEntry, "lastSeen" | "createdAt" | 
     enabled: true,
   },
   {
-      modelId: "nvidia/nemotron-3.5-bolt-e4b",
-      provider: "openai",
-      displayName: "GPT-5.3",
-      tierMinimum: "normal",
-      costPer1kInput: 20,    // $2.00/M
-      costPer1kOutput: 80,   // $8.00/M
-      maxTokens: 32768,
-      contextWindow: 1047576,
-      supportsTools: true,
-      supportsVision: true,
-      parameterStyle: "max_completion_tokens",
-      enabled: true,
-    },
-];
+        modelId: "nvidia/nemotron-3.5-bolt-e4b",
+        provider: "openai",
+        displayName: "GPT-5.3",
+        tierMinimum: "normal",
+        costPer1kInput: 20,
+        costPer1kOutput: 80,
+        maxTokens: 32768,
+        contextWindow: 1047576,
+        supportsTools: true,
+        supportsVision: true,
+        parameterStyle: "max_completion_tokens",
+        enabled: true,
+      },
+      {
+        modelId: "nvidia/nemotron-3-ultra-550b-a55b",
+        provider: "openai",
+        displayName: "Nemotron 3 Ultra",
+        tierMinimum: "high",
+        costPer1kInput: 30,
+        costPer1kOutput: 100,
+        maxTokens: 32768,
+        contextWindow: 1047576,
+        supportsTools: true,
+        supportsVision: true,
+        parameterStyle: "max_completion_tokens",
+        enabled: true,
+      },
+    ];
 
 // === Default Routing Matrix ===
 // Maps (tier, taskType) -> ModelPreference with candidate models
 
 export const DEFAULT_ROUTING_MATRIX: RoutingMatrix = {
   high: {
-    agent_turn: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 8192, ceilingCents: -1 },
+    agent_turn: { candidates: ["gpt-5.2", "gpt-5.3", "nvidia/nemotron-3-ultra-550b-a55b"], maxTokens: 8192, ceilingCents: -1 },
     heartbeat_triage: { candidates: ["gpt-5-mini"], maxTokens: 2048, ceilingCents: 5 },
-    safety_check: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 4096, ceilingCents: 20 },
+    safety_check: { candidates: ["gpt-5.2", "gpt-5.3", "nvidia/nemotron-3-ultra-550b-a55b"], maxTokens: 4096, ceilingCents: 20 },
     summarization: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: 15 },
-    planning: { candidates: ["gpt-5.2", "gpt-5.3"], maxTokens: 8192, ceilingCents: -1 },
+    planning: { candidates: ["gpt-5.2", "gpt-5.3", "nvidia/nemotron-3-ultra-550b-a55b"], maxTokens: 8192, ceilingCents: -1 },
   },
   normal: {
     agent_turn: { candidates: ["gpt-5.2", "gpt-5-mini"], maxTokens: 4096, ceilingCents: -1 },
