@@ -38,38 +38,36 @@ function broadcast(data) {
 const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCk5PREVfUElEPSQhCmVjaG8gJE5PREVfUElEID4gfi9hdXRvbWF0b24ucGlkCndhaXQgJE5PREVfUElECg==";
 
 async function startAgentScript() {
-  // Write the start script to a file on the remote machine using a heredoc
-  // This avoids complex shell escaping issues with base64 content
-  // Pass env vars inline to ensure they reach the Node process
+  // Use base64 to avoid shell escaping issues entirely
   const scriptContent = `#!/bin/bash
 cd /data/home/Automaton-HSCSG
 export AUTOMATON_LOCAL_MODE=1
-export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
-export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
-export OPENAI_API_KEY=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
 OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \\
 OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \\
 OPENAI_API_KEY=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 \\
 nohup node dist/index.js --run > ~/automaton.log 2>&1 &
-NODE_PID=\\$!
-echo \\$NODE_PID > ~/automaton.pid
-wait \\$NODE_PID`;
+NODE_PID=$!
+echo $NODE_PID > ~/automaton.pid
+wait $NODE_PID`;
 
-  // Use cat with heredoc to write the script remotely
-  const cmd = `cat > /tmp/start_agent.sh << 'EOF'\n${scriptContent}\nEOF\nchmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
+  const b64 = Buffer.from(scriptContent).toString('base64');
+  const cmd = `echo "${b64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
   await execOnInstabox(cmd);
 }
 
 // Execute command on Instabox via instabox.exe
-// Uses a heredoc to write a script file on the remote side, avoiding shell escaping issues
+// Pass command directly via SSH with proper escaping
 function execOnInstabox(command) {
   return new Promise((resolve, reject) => {
     const { exec } = require('child_process');
     const instaboxPath = 'C:/Users/Isaacko0/AppData/Local/Programs/instabox/instabox.exe';
-    // Write command to a script file on remote, then execute it
-    // This avoids complex shell escaping issues
-    const scriptName = `/tmp/exec_${Date.now()}_${Math.random().toString(36).slice(2)}.sh`;
-    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "cat > ${scriptName} << 'REMOTE_EOF'\n${command}\nREMOTE_EOF\nchmod +x ${scriptName} && ${scriptName}; rm -f ${scriptName}"`;
+    // Escape command for shell: replace " with \", $ with \$, ` with \`
+    const escapedCommand = command
+      .replace(/"/g, '\\"')
+      .replace(/\$/g, '\\$')
+      .replace(/`/g, '\\`');
+    // Use ssh with -- to pass SSH options: -o RequestTTY=no disables TTY allocation
+    const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "${escapedCommand}"`;
     console.log('[DEBUG] execOnInstabox fullCommand:', fullCommand.substring(0, 200) + '...');
     
     const child = exec(fullCommand, { shell: true, timeout: 60000, windowsHide: true }, (error, stdout, stderr) => {
