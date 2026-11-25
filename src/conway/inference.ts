@@ -25,6 +25,8 @@ interface InferenceClientOptions {
   maxTokens: number;
   lowComputeModel?: string;
   openaiApiKey?: string;
+  openaiCompatBaseUrl?: string;
+  openaiBaseUrl?: string;
   anthropicApiKey?: string;
   ollamaBaseUrl?: string;
   /** Optional registry lookup — if provided, used before name heuristics */
@@ -36,7 +38,7 @@ type InferenceBackend = "conway" | "openai" | "anthropic" | "ollama";
 export function createInferenceClient(
   options: InferenceClientOptions,
 ): InferenceClient {
-  const { apiUrl, apiKey, openaiApiKey, anthropicApiKey, ollamaBaseUrl, getModelProvider } = options;
+  const { apiUrl, apiKey, openaiApiKey, openaiCompatBaseUrl, openaiBaseUrl, anthropicApiKey, ollamaBaseUrl, getModelProvider } = options;
   const httpClient = new ResilientHttpClient({
     baseTimeout: INFERENCE_TIMEOUT_MS,
     retryableStatuses: [429, 500, 502, 503, 504],
@@ -52,11 +54,13 @@ export function createInferenceClient(
     const tools = opts?.tools;
 
     const backend = resolveInferenceBackend(model, {
-      openaiApiKey,
-      anthropicApiKey,
-      ollamaBaseUrl,
-      getModelProvider,
-    });
+          openaiApiKey,
+          openaiCompatBaseUrl,
+          openaiBaseUrl,
+          anthropicApiKey,
+          ollamaBaseUrl,
+          getModelProvider,
+        });
 
     // Newer models (o-series, gpt-5.x, gpt-4.1) require max_completion_tokens.
     // Ollama always uses max_tokens.
@@ -98,9 +102,11 @@ export function createInferenceClient(
     }
 
     const openAiLikeApiUrl =
-          backend === "openai" ? (process.env.OPENAI_COMPAT_BASE_URL || "https://api.openai.com").replace(/\/$/, "") :
-          backend === "ollama" ? (ollamaBaseUrl as string).replace(/\/$/, "") :
-          apiUrl;
+              backend === "openai"
+                ? (openaiCompatBaseUrl || openaiBaseUrl || process.env.OPENAI_COMPAT_BASE_URL || "https://api.openai.com").replace(/\/$/, "")
+                : backend === "ollama"
+                ? (ollamaBaseUrl as string).replace(/\/$/, "")
+                : apiUrl;
     const openAiLikeApiKey =
       backend === "openai" ? (openaiApiKey as string) :
       backend === "ollama" ? "ollama" :
@@ -165,12 +171,16 @@ function resolveInferenceBackend(
   model: string,
   keys: {
     openaiApiKey?: string;
+    openaiCompatBaseUrl?: string;
+    openaiBaseUrl?: string;
     anthropicApiKey?: string;
     ollamaBaseUrl?: string;
     getModelProvider?: (modelId: string) => string | undefined;
   },
 ): InferenceBackend {
-  if (process.env.OPENAI_COMPAT_BASE_URL) { if (keys.openaiApiKey) return "openai"; }
+  if (keys.openaiCompatBaseUrl || keys.openaiBaseUrl || process.env.OPENAI_COMPAT_BASE_URL) {
+    if (keys.openaiApiKey) return "openai";
+  }
   // Registry-based routing: most accurate, no name guessing
   if (keys.getModelProvider) {
     const provider = keys.getModelProvider(model);

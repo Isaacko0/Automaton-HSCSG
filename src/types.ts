@@ -42,6 +42,8 @@ export interface AutomatonConfig {
   conwayApiUrl: string;
   conwayApiKey: string;
   openaiApiKey?: string;
+  openaiCompatBaseUrl?: string;
+  openaiBaseUrl?: string;
   anthropicApiKey?: string;
   ollamaBaseUrl?: string;
   inferenceModel: string;

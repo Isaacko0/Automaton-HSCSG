@@ -119,6 +119,8 @@ export function createConfig(params: {
   walletAddress: Address;
   apiKey: string;
   openaiApiKey?: string;
+  openaiCompatBaseUrl?: string;
+  openaiBaseUrl?: string;
   anthropicApiKey?: string;
   ollamaBaseUrl?: string;
   parentAddress?: Address;
@@ -135,6 +137,8 @@ export function createConfig(params: {
       DEFAULT_CONFIG.conwayApiUrl || "https://api.conway.tech",
     conwayApiKey: params.apiKey,
     openaiApiKey: params.openaiApiKey,
+    openaiCompatBaseUrl: params.openaiCompatBaseUrl,
+    openaiBaseUrl: params.openaiBaseUrl,
     anthropicApiKey: params.anthropicApiKey,
     ollamaBaseUrl: params.ollamaBaseUrl,
     inferenceModel: DEFAULT_CONFIG.inferenceModel || "gpt-5.2",
