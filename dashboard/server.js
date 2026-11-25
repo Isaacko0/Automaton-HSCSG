@@ -38,28 +38,34 @@ function broadcast(data) {
 const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCk5PREVfUElEPSQhCmVjaG8gJE5PREVfUElEID4gfi9hdXRvbWF0b24ucGlkCndhaXQgJE5PREVfUElECg==";
 
 async function startAgentScript() {
-  // Run node directly with inline env vars (simpler and more reliable than script file)
-  const cmd = `cd /data/home/Automaton-HSCSG && \
-export AUTOMATON_LOCAL_MODE=1 && \
-OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \
-OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \
-OPENAI_API_KEY=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 \
-nohup node dist/index.js --run > ~/automaton.log 2>&1 & \
-NODE_PID=\$! && \
-echo \$NODE_PID > ~/automaton.pid`;
+  // Use base64-encoded script to avoid all shell escaping issues
+  // The script runs in its own shell so env vars are properly set
+  const scriptContent = `#!/bin/bash
+cd /data/home/Automaton-HSCSG
+export AUTOMATON_LOCAL_MODE=1
+export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_API_KEY=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
+nohup node dist/index.js --run > ~/automaton.log 2>&1 &
+NODE_PID=$!
+echo $NODE_PID > ~/automaton.pid
+wait $NODE_PID`;
+
+  const b64 = Buffer.from(scriptContent).toString('base64');
+  const cmd = `echo "${b64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
   await execOnInstabox(cmd);
 }
 
 // Execute command on Instabox via instabox.exe
-// Pass command directly via SSH with proper escaping
+// Pass command directly via SSH with proper escaping (but NOT $, so remote scripts can expand vars)
 function execOnInstabox(command) {
   return new Promise((resolve, reject) => {
     const { exec } = require('child_process');
     const instaboxPath = 'C:/Users/Isaacko0/AppData/Local/Programs/instabox/instabox.exe';
-    // Escape command for shell: replace " with \", $ with \$, ` with \`
+    // Escape command for shell: replace " with \", ` with \`
+    // DO NOT escape $ - remote scripts need it for variable expansion
     const escapedCommand = command
       .replace(/"/g, '\\"')
-      .replace(/\$/g, '\\$')
       .replace(/`/g, '\\`');
     // Use ssh with -- to pass SSH options: -o RequestTTY=no disables TTY allocation
     const fullCommand = `"${instaboxPath}" ssh box-40416d -- -o RequestTTY=no "${escapedCommand}"`;
