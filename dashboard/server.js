@@ -39,13 +39,13 @@ const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0
 
 async function startAgentScript() {
   // Use base64-encoded script to avoid all shell escaping issues
-  // The script runs in its own shell so env vars are properly set
+  // Put env vars inline with node command (proven to work)
   const scriptContent = `#!/bin/bash
 cd /data/home/Automaton-HSCSG
 export AUTOMATON_LOCAL_MODE=1
-export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
-export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
-export OPENAI_API_KEY=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
+OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \\
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \\
+OPENAI_API_KEY=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 \\
 nohup node dist/index.js --run > ~/automaton.log 2>&1 &
 NODE_PID=$!
 echo $NODE_PID > ~/automaton.pid
