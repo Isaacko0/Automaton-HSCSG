@@ -266,16 +266,16 @@ async function run(): Promise<void> {
   const modelRegistry = new ModelRegistry(db.raw);
   modelRegistry.initialize();
   const inference = createInferenceClient({
-      apiUrl: config.conwayApiUrl,
-      apiKey,
-      defaultModel: config.inferenceModel,
-      maxTokens: config.maxTokensPerTurn,
-      lowComputeModel: config.modelStrategy?.lowComputeModel || "gpt-5-mini",
-      openaiApiKey: config.openaiApiKey,
-      anthropicApiKey: config.anthropicApiKey,
-      ollamaBaseUrl,
-      getModelProvider: (modelId) => modelRegistry.get(modelId)?.provider,
-    });
+        apiUrl: config.conwayApiUrl,
+        apiKey,
+        defaultModel: config.inferenceModel,
+        maxTokens: config.maxTokensPerTurn,
+        lowComputeModel: config.modelStrategy?.lowComputeModel || "gpt-5-mini",
+        openaiApiKey: config.openaiApiKey,
+        anthropicApiKey: config.anthropicApiKey,
+        ollamaBaseUrl,
+        getModelProvider: (modelId) => modelRegistry.get(modelId)?.provider,
+      });
 
   if (ollamaBaseUrl) {
     logger.info(`[${new Date().toISOString()}] Ollama backend: ${ollamaBaseUrl}`);
