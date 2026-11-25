@@ -40,16 +40,20 @@ const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0
 async function startAgentScript() {
   // Write the start script to a file on the remote machine using a heredoc
   // This avoids complex shell escaping issues with base64 content
+  // Pass env vars inline to ensure they reach the Node process
   const scriptContent = `#!/bin/bash
 cd /data/home/Automaton-HSCSG
 export AUTOMATON_LOCAL_MODE=1
 export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
 export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
 export OPENAI_API_KEY=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
+OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \\
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \\
+OPENAI_API_KEY=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 \\
 nohup node dist/index.js --run > ~/automaton.log 2>&1 &
-NODE_PID=\$!
-echo \$NODE_PID > ~/automaton.pid
-wait \$NODE_PID`;
+NODE_PID=\\$!
+echo \\$NODE_PID > ~/automaton.pid
+wait \\$NODE_PID`;
 
   // Use cat with heredoc to write the script remotely
   const cmd = `cat > /tmp/start_agent.sh << 'EOF'\n${scriptContent}\nEOF\nchmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
