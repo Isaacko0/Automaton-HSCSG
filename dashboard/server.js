@@ -38,21 +38,23 @@ function broadcast(data) {
 const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCk5PREVfUElEPSQhCmVjaG8gJE5PREVfUElEID4gfi9hdXRvbWF0b24ucGlkCndhaXQgJE5PREVfUElECg==";
 
 async function startAgentScript() {
-  // Write a script on the remote machine that sets env vars and starts node in background
-  // This avoids SSH nohup inheritance issues
+  // Write a script on the remote machine that uses setsid to fully detach node
+  // setsid creates a new session, preventing SIGHUP when SSH exits
+  // The script runs in foreground (no &), so SSH waits for it to finish (instant)
+  // but node keeps running in its own session
   const scriptContent = `#!/bin/bash
 cd /data/home/Automaton-HSCSG
 export AUTOMATON_LOCAL_MODE=1
 export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
 export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
 export OPENAI_API_KEY=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
-node dist/index.js --run > ~/automaton.log 2>&1 &
+setsid node dist/index.js --run > ~/automaton.log 2>&1 &
 NODE_PID=$!
 echo $NODE_PID > ~/automaton.pid
 `;
 
   const b64 = Buffer.from(scriptContent).toString('base64');
-  const cmd = `echo "${b64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
+  const cmd = `echo "${b64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && bash /tmp/start_agent.sh`;
   await execOnInstabox(cmd);
 }
 
