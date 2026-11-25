@@ -264,23 +264,34 @@ async function run(): Promise<void> {
     const openaiCompatBaseUrl = process.env.OPENAI_COMPAT_BASE_URL || config.openaiCompatBaseUrl;
     const openaiBaseUrl = process.env.OPENAI_BASE_URL || config.openaiBaseUrl;
 
+    // Set process.env from config so inference client can use them
+    if (config.openaiCompatBaseUrl && !process.env.OPENAI_COMPAT_BASE_URL) {
+      process.env.OPENAI_COMPAT_BASE_URL = config.openaiCompatBaseUrl;
+    }
+    if (config.openaiBaseUrl && !process.env.OPENAI_BASE_URL) {
+      process.env.OPENAI_BASE_URL = config.openaiBaseUrl;
+    }
+    if (config.openaiApiKey && !process.env.OPENAI_API_KEY) {
+      process.env.OPENAI_API_KEY = config.openaiApiKey;
+    }
+
     // Create inference client — pass a live registry lookup so model names like
     // "gpt-oss:120b" route to Ollama based on their registered provider, not heuristics.
     const modelRegistry = new ModelRegistry(db.raw);
     modelRegistry.initialize();
     const inference = createInferenceClient({
-          apiUrl: config.conwayApiUrl,
-          apiKey,
-          defaultModel: config.inferenceModel,
-          maxTokens: config.maxTokensPerTurn,
-          lowComputeModel: config.modelStrategy?.lowComputeModel || "gpt-5-mini",
-          openaiApiKey: config.openaiApiKey,
-          openaiCompatBaseUrl,
-          openaiBaseUrl,
-          anthropicApiKey: config.anthropicApiKey,
-          ollamaBaseUrl,
-          getModelProvider: (modelId) => modelRegistry.get(modelId)?.provider,
-        });
+        apiUrl: config.conwayApiUrl,
+        apiKey,
+        defaultModel: config.inferenceModel,
+        maxTokens: config.maxTokensPerTurn,
+        lowComputeModel: config.modelStrategy?.lowComputeModel || "gpt-5-mini",
+        openaiApiKey: config.openaiApiKey,
+        openaiCompatBaseUrl,
+        openaiBaseUrl,
+        anthropicApiKey: config.anthropicApiKey,
+        ollamaBaseUrl,
+        getModelProvider: (modelId) => modelRegistry.get(modelId)?.provider,
+      });
 
   if (ollamaBaseUrl) {
     logger.info(`[${new Date().toISOString()}] Ollama backend: ${ollamaBaseUrl}`);
