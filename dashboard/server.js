@@ -38,21 +38,16 @@ function broadcast(data) {
 const START_SCRIPT_B64 = "IyEvYmluL2Jhc2gKY2QgL2RhdGEvaG9tZS9BdXRvbWF0b24tSFNDU0cKZXhwb3J0IEFVVE9NQVRPTl9MT0NBTF9NT0RFPTEKZXhwb3J0IE9QRU5BSV9DT01QQVRfQkFTRV9VUkw9aHR0cHM6Ly9pbnRlZ3JhdGUuYXBpLm52aWRpYS5jb20vdjEKZXhwb3J0IE9QRU5BSV9CQVNFX1VSTD1odHRwczovL2ludGVncmF0ZS5hcGkubnZpZGlhLmNvbS92MQpleHBvcnQgT1BFTkFJX0FQSV9LRVk9bnZhcGktb2hkdU4yMmphOHR4TVFiSXMzbkJUVXFOeG10ZFNyeHpTSEVLY2YwZVNXTUZUR1NacmM1Tkh3LUE5cVF2Ml96Uwpub2h1cCBub2RlIGRpc3QvaW5kZXguanMgLS1ydW4gPiB+L2F1dG9tYXRvbi5sb2cgMj4mMSAmCk5PREVfUElEPSQhCmVjaG8gJE5PREVfUElEID4gfi9hdXRvbWF0b24ucGlkCndhaXQgJE5PREVfUElECg==";
 
 async function startAgentScript() {
-  // Write a script that runs node with inline env vars (proven to work)
-  // The script runs in foreground; execOnInstabox backgrounds the whole script via nohup
-  const scriptContent = `#!/bin/bash
-cd /data/home/Automaton-HSCSG
-AUTOMATON_LOCAL_MODE=1 \\
-OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \\
-OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \\
-OPENAI_API_KEY=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 \\
-node dist/index.js --run > ~/automaton.log 2>&1 &
-NODE_PID=$!
-echo $NODE_PID > ~/automaton.pid
-`;
-
-  const b64 = Buffer.from(scriptContent).toString('base64');
-  const cmd = `echo "${b64}" | base64 -d > /tmp/start_agent.sh && chmod +x /tmp/start_agent.sh && nohup /tmp/start_agent.sh > /dev/null 2>&1`;
+  // Run node directly via SSH with inline env vars (proven to work)
+  // This avoids all script/inheritance issues
+  const cmd = `cd /data/home/Automaton-HSCSG && \
+AUTOMATON_LOCAL_MODE=1 \
+OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \
+OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \
+OPENAI_API_KEY=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 \
+nohup node dist/index.js --run > ~/automaton.log 2>&1 & \
+NODE_PID=$! && \
+echo $NODE_PID > ~/automaton.pid`;
   await execOnInstabox(cmd);
 }
 
