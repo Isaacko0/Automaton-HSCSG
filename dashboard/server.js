@@ -42,9 +42,9 @@ async function startAgentScript() {
   const scriptContent = `#!/bin/bash
 cd /data/home/Automaton-HSCSG
 export AUTOMATON_LOCAL_MODE=1
-OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1 \\
-OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1 \\
-OPENAI_API_KEY=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 \\
+export OPENAI_COMPAT_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1
+export OPENAI_API_KEY=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
 nohup node dist/index.js --run > ~/automaton.log 2>&1 &
 NODE_PID=$!
 echo $NODE_PID > ~/automaton.pid
